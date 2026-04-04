@@ -1,4 +1,4 @@
-# # DvG  — Digitalisierung Eingangsrechnungsbearbeitung
+# DvG  — Digitalisierung Eingangsrechnungsbearbeitung
 
 Technischer Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung mit gRPC-Service, Zahlungssystem über Messaging und Client.
 

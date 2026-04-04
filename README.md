@@ -35,7 +35,7 @@ git push origin main
 
 ## Team
 
-- [Sam Haghighi]
-- [Efe Yueksei]
-- [Nick Rusnak]
-- [Abubakar Abdi Tube]
+- Sam Haghighi
+- Efe Yueksei
+- Nick Rusna
+- Abubakar Abdi Tube

@@ -4,9 +4,12 @@ Technischer Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung mit gR
 
 ## Architektur
 
+![1775498351364](images/README/1775498351364.png)
+
 ### Rechnungs_metadatenmodell.json
 
-```json
+````json
+
 {
   "invoiceId": "INV-2026-001",
   "supplierId": "SUP-123",
@@ -22,13 +25,7 @@ Technischer Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung mit gR
   "createdAt": "2026-04-06T10:30:00Z"
 }
 ```
-
-![1775497530429](images/README/1775497530429.png)
-
-
-
-
-
+````
 
 
 ## Komponenten

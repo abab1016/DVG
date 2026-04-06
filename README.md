@@ -24,7 +24,6 @@ Technischer Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung mit gR
   "fileName": "invoice_2026_001.pdf",
   "createdAt": "2026-04-06T10:30:00Z"
 }
-```
 ````
 
 

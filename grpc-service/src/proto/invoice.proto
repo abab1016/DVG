@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package rechnung;
+
+// gRPC-Dienst: Speichert und liefert Rechnungsmetadaten
+service RechnungsService {
+  rpc SpeichereRechnungsmetadaten (Rechnungsmetadaten) returns (SpeicherAntwort);
+  rpc HoleRechnungsmetadaten      (RechnungsAnfrage)   returns (Rechnungsmetadaten);
+}
+
+message Rechnungsmetadaten {
+  string invoiceId     = 1;
+  string supplierId    = 2;
+  string supplierName  = 3;
+  string invoiceDate   = 4;
+  string dueDate       = 5;
+  double amountNet     = 6;
+  double amountGross   = 7;
+  string currency      = 8;
+  string iban          = 9;
+  string status        = 10;
+  string fileName      = 11;
+  string createdAt     = 12;
+}
+
+message SpeicherAntwort {
+  string invoiceId = 1;   // bestätigte Rechnungs-ID
+  bool   success   = 2;
+  string message   = 3;
+}
+
+message RechnungsAnfrage {
+  string invoiceId = 1;
+}

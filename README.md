@@ -123,7 +123,6 @@ Alle Felder müssen vorhanden sein:
   "fileName":     "rechnung_april.pdf",
   "createdAt":    "2026-04-10T09:00:00Z"
 }
-```
 
 Der Betrag im Zahlungsauftrag ist immer `amountGross`.
 

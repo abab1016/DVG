@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Laufzeitdaten
+Rechnungsdaten/zahlungslog.json
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Node.js (nicht mehr verwendet)
+node_modules/

@@ -40,9 +40,21 @@ def test_verarbeite_zahlung_kein_ack_bei_json_fehler():
     mock_kanal = MagicMock()
     mock_methode = MagicMock()
 
-    with pytest.raises(Exception):
-        verarbeite_zahlung(mock_kanal, mock_methode, None, b"kein json")
+    verarbeite_zahlung(mock_kanal, mock_methode, None, b"kein json")
 
+    mock_kanal.basic_nack.assert_called_once_with(delivery_tag=mock_methode.delivery_tag, requeue=False)
+    mock_kanal.basic_ack.assert_not_called()
+
+
+def test_verarbeite_zahlung_kein_ack_bei_fehlenden_feldern():
+    mock_kanal = MagicMock()
+    mock_methode = MagicMock()
+    
+    unvollstaendiger_auftrag = {"invoiceId": "INV-123"} # Es fehlen Pflichtfelder
+
+    verarbeite_zahlung(mock_kanal, mock_methode, None, json.dumps(unvollstaendiger_auftrag).encode())
+
+    mock_kanal.basic_nack.assert_called_once_with(delivery_tag=mock_methode.delivery_tag, requeue=False)
     mock_kanal.basic_ack.assert_not_called()
 
 

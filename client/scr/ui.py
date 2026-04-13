@@ -1,6 +1,7 @@
 import sys
 import json
-from datetime import datetime, timezone
+import re
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,6 +41,32 @@ def eingabe_zahl(bezeichnung: str, standard: float) -> float:
             return float(rohwert.replace(",", "."))
         except ValueError:
             print("  Bitte eine gültige Zahl eingeben.")
+
+
+def eingabe_datum(bezeichnung: str, standard: str) -> str:
+    while True:
+        wert = eingabe(bezeichnung, standard)
+        try:
+            datetime.strptime(wert, "%Y-%m-%d")
+            return wert
+        except ValueError:
+            print("  Bitte ein gültiges Datum im Format JJJJ-MM-TT (z.B. 2026-04-13) eingeben.")
+
+
+def eingabe_waehrung(bezeichnung: str, standard: str) -> str:
+    while True:
+        wert = eingabe(bezeichnung, standard).upper()
+        if re.match(r"^[A-Z]{3}$", wert):
+            return wert
+        print("  Bitte einen 3-stelligen Währungscode eingeben (z.B. EUR, USD).")
+
+
+def eingabe_iban(bezeichnung: str, standard: str) -> str:
+    while True:
+        wert = eingabe(bezeichnung, standard).upper().replace(" ", "")
+        if re.match(r"^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$", wert):
+            return wert
+        print("  Bitte eine gültiges IBAN-Format eingeben (beginnt mit Ländercode, danach Ziffern).")
 
 
 def rechnung_anzeigen(rechnung: dict):
@@ -92,17 +119,19 @@ def modus_demo():
 
 def modus_manuell():
     print("\n  Rechnungsdaten eingeben (Enter = Standardwert übernehmen)\n")
-    heute = datetime.today().strftime("%Y-%m-%d")
+    heute_obj = datetime.today()
+    heute = heute_obj.strftime("%Y-%m-%d")
+    faellig = (heute_obj + timedelta(days=30)).strftime("%Y-%m-%d")
     rechnung = {
-        "invoiceId":    eingabe("Rechnungs-ID", f"INV-{datetime.today().year}-001"),
+        "invoiceId":    eingabe("Rechnungs-ID", f"INV-{heute_obj.year}-001"),
         "supplierId":   eingabe("Lieferanten-ID", "SUP-001"),
         "supplierName": eingabe("Lieferantenname", "Muster GmbH"),
-        "invoiceDate":  eingabe("Rechnungsdatum (JJJJ-MM-TT)", heute),
-        "dueDate":      eingabe("Fälligkeitsdatum (JJJJ-MM-TT)", heute[:8] + "30"),
+        "invoiceDate":  eingabe_datum("Rechnungsdatum (JJJJ-MM-TT)", heute),
+        "dueDate":      eingabe_datum("Fälligkeitsdatum (JJJJ-MM-TT)", faellig),
         "amountNet":    eingabe_zahl("Nettobetrag (EUR)", 0.00),
         "amountGross":  eingabe_zahl("Bruttobetrag (EUR)", 0.00),
-        "currency":     eingabe("Währung", "EUR"),
-        "iban":         eingabe("IBAN", "DE00000000000000000000"),
+        "currency":     eingabe_waehrung("Währung", "EUR"),
+        "iban":         eingabe_iban("IBAN", "DE00000000000000000000"),
         "status":       "OPEN",
         "fileName":     eingabe("Dateiname", "rechnung.pdf"),
         "createdAt":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

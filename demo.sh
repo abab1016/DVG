@@ -22,13 +22,20 @@ echo "[Demo] DVG End-to-End Demo"
 echo ""
 
 # Voraussetzungen prüfen
-command -v python >/dev/null 2>&1 || { echo "[Demo] Python nicht gefunden."; exit 1; }
+if command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+else
+    echo "[Demo] Python nicht gefunden."
+    exit 1
+fi
 command -v docker >/dev/null 2>&1 || { echo "[Demo] Docker nicht gefunden."; exit 1; }
 
 if [ ! -f "$WURZELVERZEICHNIS/grpc-service/src/invoice_pb2.py" ]; then
     echo "[Demo] Proto-Stubs fehlen, werden generiert ..."
     cd "$WURZELVERZEICHNIS/grpc-service/src"
-    python -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/invoice.proto
+    "$PYTHON_CMD" -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/invoice.proto
     cd "$WURZELVERZEICHNIS"
 fi
 
@@ -52,7 +59,7 @@ echo "[Demo] RabbitMQ läuft auf localhost:5672 (Verwaltung: http://localhost:15
 # gRPC-Service starten
 echo "[Demo] Starte gRPC-Service ..."
 cd "$WURZELVERZEICHNIS/grpc-service/src"
-python server.py > "$GRPC_PROTOKOLL" 2>&1 &
+"$PYTHON_CMD" -u server.py > "$GRPC_PROTOKOLL" 2>&1 &
 GRPC_PROZESS=$!
 cd "$WURZELVERZEICHNIS"
 
@@ -66,7 +73,7 @@ echo "[Demo] gRPC-Service läuft auf localhost:50051 (Prozess $GRPC_PROZESS)"
 # Zahlungssystem starten
 echo "[Demo] Starte Zahlungssystem ..."
 cd "$WURZELVERZEICHNIS/zahlungssystem/scr"
-python consumer.py > "$CONSUMER_PROTOKOLL" 2>&1 &
+"$PYTHON_CMD" -u consumer.py > "$CONSUMER_PROTOKOLL" 2>&1 &
 CONSUMER_PROZESS=$!
 cd "$WURZELVERZEICHNIS"
 
@@ -84,10 +91,10 @@ cd "$WURZELVERZEICHNIS/client/scr"
 
 if [[ "$*" == *"--demo"* ]]; then
     echo "[Demo] Starte Demo-Durchlauf (nicht-interaktiv) ..."
-    python client.py
+    "$PYTHON_CMD" client.py
 else
     echo "[Demo] Starte interaktive Oberfläche ..."
-    python ui.py
+    "$PYTHON_CMD" ui.py
 fi
 
 cd "$WURZELVERZEICHNIS"

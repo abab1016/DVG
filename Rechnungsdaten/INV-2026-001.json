@@ -1,0 +1,14 @@
+{
+  "invoiceId": "INV-2026-001",
+  "supplierId": "SUP-001",
+  "supplierName": "ju",
+  "invoiceDate": "2000-12-01",
+  "dueDate": "2026-05-13",
+  "amountNet": 0.0,
+  "amountGross": 0.0,
+  "currency": "EUR",
+  "iban": "DE00000000000000000000",
+  "status": "OPEN",
+  "fileName": "rechnung.pdf",
+  "createdAt": "2026-04-13T15:31:27Z"
+}

@@ -232,7 +232,7 @@ DVG/
 
 ## Team
 
-- Sam Haghighi
-- Efe Yueksei
-- Nick Rusna
-- Abubakar Abdi Tube
+- Sam Haghighi (hasa1034)
+- Efe Yueksei (yuce1011)
+- Nick Rusna (runi1015)
+- Abubakar Abdi Tube (abab1016)

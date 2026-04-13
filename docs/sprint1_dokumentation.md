@@ -3,7 +3,7 @@
 **Projekt:** DVG — Digitalisierung Eingangsrechnungsbearbeitung  
 **Sprint-Zeitraum:** April 2026  
 **Team:** Sam Haghighi, Efe Yueksei, Nick Rusna, Abubakar Abdi Tube  
-**GitHub:** [GitHub-Repository-URL eintragen]
+**GitHub:** [https://github.com/abab1016/DVG]
 
 ---
 

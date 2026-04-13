@@ -3,7 +3,7 @@ import os
 import pika
 from datetime import datetime, timezone
 
-BROKER = os.getenv("BROKER_ADRESSE", "amqp://guest:guest@localhost/")
+BROKER = os.getenv("BROKER_ADRESSE", "amqp://admin:admin@localhost/")
 WARTESCHLANGE = "zahlungsauftraege"
 
 

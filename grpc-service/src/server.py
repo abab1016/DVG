@@ -65,7 +65,7 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
 
 def main():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
-    invoice_pb2_grpc.fuegeRechnungsServiceHinzu(RechnungsService(), server)
+    invoice_pb2_grpc.add_RechnungsServiceServicer_to_server(RechnungsService(), server)
     server.add_insecure_port("0.0.0.0:50051")
     server.start()
     print("[gRPC-Server] Läuft auf Port 50051")

@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timezone
 from pathlib import Path
 
-BROKER = os.getenv("BROKER_ADRESSE", "amqp://guest:guest@localhost/")
+BROKER = os.getenv("BROKER_ADRESSE", "amqp://admin:admin@localhost/")
 WARTESCHLANGE = "zahlungsauftraege"
 LOG_DATEI = Path(__file__).parent.parent.parent / "Rechnungsdaten" / "zahlungslog.json"
 

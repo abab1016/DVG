@@ -18,11 +18,13 @@ Im zweiten Schritt baut der Client mit der bestätigten ID einen Zahlungsauftrag
 - Docker Desktop (für RabbitMQ)
 
 Abhängigkeiten installieren:
+
 ```bash
 pip install grpcio grpcio-tools pika pytest
 ```
 
 Proto-Stubs generieren — das muss einmalig gemacht werden, und wieder wenn sich `invoice.proto` ändert:
+
 ```bash
 cd grpc-service/src
 python -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/invoice.proto
@@ -40,8 +42,6 @@ bash demo.sh
 bash demo.sh --demo
 ```
 
-
-
 Das Skript startet RabbitMQ, wartet bis es bereit ist, dann gRPC-Service und Zahlungssystem im Hintergrund, und öffnet schließlich den Client. Strg+C beendet alles sauber.
 
 ## Manuell starten
@@ -49,25 +49,31 @@ Das Skript startet RabbitMQ, wartet bis es bereit ist, dann gRPC-Service und Zah
 Wer die einzelnen Komponenten lieber selbst starten will, braucht vier Terminals. Die Reihenfolge ist wichtig: RabbitMQ muss vor dem Consumer laufen, der gRPC-Service vor dem Client.
 
 **Terminal 1 — RabbitMQ**
+
 ```bash
 docker compose up -d rabbitmq
 ```
 
 **Terminal 2 — gRPC-Service**
+
 ```bash
 cd grpc-service/src
 python server.py
 ```
+
 Bereit, wenn `[gRPC-Server] Läuft auf Port 50051` erscheint.
 
 **Terminal 3 — Zahlungssystem**
+
 ```bash
 cd zahlungssystem/src
 python consumer.py
 ```
+
 Bereit, wenn `Warte auf Nachrichten in 'zahlungsauftraege' ...` erscheint.
 
 **Terminal 4 — Client**
+
 ```bash
 cd client/src
 
@@ -97,6 +103,7 @@ Der Client ist der Einstiegspunkt für Benutzer. Er erfasst Rechnungsdaten, spei
 Option 1 lädt die eingebaute Demo-Rechnung (Muster GmbH, 1190,50 EUR) und fragt kurz nach Bestätigung. Option 2 fragt alle Felder ab, bei jedem steht der Standardwert in Klammern — Enter übernimmt ihn einfach. Option 3 erwartet den Pfad zu einer JSON-Datei.
 
 **Rechnung direkt aus Datei verarbeiten (`client.py`):**
+
 ```bash
 cd client/src
 python client.py --file /pfad/zur/rechnung.json
@@ -150,11 +157,12 @@ Das Statusprotokoll sieht so aus:
 
 Ohne Konfiguration funktioniert alles mit den Standardwerten. Für andere Setups:
 
-| Variable | Standard | Beschreibung |
-|---|---|---|
-| `GRPC_ADRESSE` | `localhost:50051` | Adresse des gRPC-Service |
-| `GRPC_ZEITLIMIT` | `5` | Zeitlimit in Sekunden |
-| `BROKER_ADRESSE` | `amqp://guest:guest@localhost/` | RabbitMQ-Verbindung |
+
+| Variable         | Standard                        | Beschreibung             |
+| ---------------- | ------------------------------- | ------------------------ |
+| `GRPC_ADRESSE`   | `localhost:50051`               | Adresse des gRPC-Service |
+| `GRPC_ZEITLIMIT` | `5`                             | Zeitlimit in Sekunden    |
+| `BROKER_ADRESSE` | `amqp://guest:guest@localhost/` | RabbitMQ-Verbindung      |
 
 ## RabbitMQ-Verwaltungsoberfläche
 
@@ -168,12 +176,13 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 
 27 Tests, kein laufender Service nötig — gRPC und RabbitMQ werden simuliert.
 
-| Testdatei | Tests | Inhalt |
-|---|---|---|
-| `grpc-service/tests/test_server.py` | 7 | Speichern, Datei anlegen, leere ID, Leerzeichen-ID, doppelte ID, Abrufen, nicht gefunden |
-| `client/src/tests/test_grpc_client.py` | 6 | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe, `success=False` |
-| `client/src/tests/test_payment_producer.py` | 7 | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler |
-| `zahlungssystem/src/tests/test_consumer.py` | 7 | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
+
+| Testdatei                                   | Tests | Inhalt                                                                                                                                  |
+| ------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `grpc-service/tests/test_server.py`         | 7     | Speichern, Datei anlegen, leere ID, Leerzeichen-ID, doppelte ID, Abrufen, nicht gefunden                                                |
+| `client/src/tests/test_grpc_client.py`      | 6     | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe,`success=False`                                                       |
+| `client/src/tests/test_payment_producer.py` | 7     | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler                       |
+| `zahlungssystem/src/tests/test_consumer.py` | 7     | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
 
 ## gRPC-Schnittstelle
 

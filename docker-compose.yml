@@ -6,10 +6,10 @@ services:
     container_name: dvg-rabbitmq
     ports:
       - "5672:5672"    # AMQP
-      - "15672:15672"  # Management-UI (http://localhost:15672, guest/guest)
+      - "15672:15672"  # Management-UI (http://localhost:15672, admin/admin)
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s

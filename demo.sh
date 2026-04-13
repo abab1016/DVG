@@ -33,21 +33,27 @@ if [ ! -f "$WURZELVERZEICHNIS/grpc-service/src/invoice_pb2.py" ]; then
 fi
 
 # RabbitMQ starten
-echo "[Demo] Starte RabbitMQ ..."
 cd "$WURZELVERZEICHNIS"
-docker compose up -d rabbitmq
+CONTAINER_STATUS=$(docker inspect --format='{{.State.Health.Status}}' dvg-rabbitmq 2>/dev/null || echo "fehlt")
 
-echo "[Demo] Warte bis RabbitMQ bereit ist ..."
-VERSUCHE=0
-until docker compose exec -T rabbitmq rabbitmq-diagnostics ping >/dev/null 2>&1; do
-    VERSUCHE=$((VERSUCHE + 1))
-    if [ $VERSUCHE -ge 24 ]; then
-        echo "[Demo] RabbitMQ startet nicht (Zeitüberschreitung nach 2 Minuten)."
-        exit 1
-    fi
-    sleep 5
-done
-echo "[Demo] RabbitMQ läuft auf localhost:5672 (Verwaltung: http://localhost:15672)"
+if [ "$CONTAINER_STATUS" = "healthy" ]; then
+    echo "[Demo] RabbitMQ läuft bereits auf localhost:5672 (Verwaltung: http://localhost:15672)"
+else
+    echo "[Demo] Starte RabbitMQ ..."
+    docker compose up -d rabbitmq
+
+    echo "[Demo] Warte bis RabbitMQ bereit ist ..."
+    VERSUCHE=0
+    until docker compose exec -T rabbitmq rabbitmq-diagnostics ping >/dev/null 2>&1; do
+        VERSUCHE=$((VERSUCHE + 1))
+        if [ $VERSUCHE -ge 60 ]; then
+            echo "[Demo] RabbitMQ startet nicht (Zeitüberschreitung nach 2 Minuten)."
+            exit 1
+        fi
+        sleep 2
+    done
+    echo "[Demo] RabbitMQ läuft auf localhost:5672 (Verwaltung: http://localhost:15672)"
+fi
 
 # gRPC-Service starten
 echo "[Demo] Starte gRPC-Service ..."
@@ -78,6 +84,10 @@ fi
 echo "[Demo] Zahlungssystem läuft (Prozess $CONSUMER_PROZESS)"
 
 echo ""
+
+# Alte Demo-Rechnungsdaten bereinigen
+echo "[Demo] Bereinige alte Demo-Rechnungsdaten ..."
+rm -f "$WURZELVERZEICHNIS/Rechnungsdaten/INV-2026-001.json"
 
 # Client starten
 cd "$WURZELVERZEICHNIS/client/src"

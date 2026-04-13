@@ -23,3 +23,6 @@ Rechnungsdaten/
 
 # Node.js (nicht mehr verwendet)
 node_modules/
+
+invoice_pb2.py
+invoice_pb2_grpc.py

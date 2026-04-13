@@ -36,9 +36,10 @@ def test_verarbeite_zahlung_gibt_daten_aus(capsys):
     assert "1190.5" in ausgabe
 
 
-def test_verarbeite_zahlung_kein_ack_bei_json_fehler():
+def test_verarbeite_zahlung_nack_bei_json_fehler():
     mock_kanal = MagicMock()
     mock_methode = MagicMock()
+    mock_methode.delivery_tag = 7
 
     verarbeite_zahlung(mock_kanal, mock_methode, None, b"kein json")
 
@@ -46,16 +47,29 @@ def test_verarbeite_zahlung_kein_ack_bei_json_fehler():
     mock_kanal.basic_ack.assert_not_called()
 
 
-def test_verarbeite_zahlung_kein_ack_bei_fehlenden_feldern():
+
+def test_verarbeite_zahlung_nack_bei_fehlendem_feld():
     mock_kanal = MagicMock()
     mock_methode = MagicMock()
-    
-    unvollstaendiger_auftrag = {"invoiceId": "INV-123"} # Es fehlen Pflichtfelder
+    mock_methode.delivery_tag = 8
+    auftrag_ohne_iban = {k: v for k, v in TESTAUFTRAG.items() if k != "iban"}
 
-    verarbeite_zahlung(mock_kanal, mock_methode, None, json.dumps(unvollstaendiger_auftrag).encode())
+    verarbeite_zahlung(mock_kanal, mock_methode, None, json.dumps(auftrag_ohne_iban).encode())
 
-    mock_kanal.basic_nack.assert_called_once_with(delivery_tag=mock_methode.delivery_tag, requeue=False)
     mock_kanal.basic_ack.assert_not_called()
+    mock_kanal.basic_nack.assert_called_once_with(delivery_tag=8, requeue=False)
+
+
+def test_verarbeite_zahlung_nack_bei_negativem_betrag():
+    mock_kanal = MagicMock()
+    mock_methode = MagicMock()
+    mock_methode.delivery_tag = 9
+    auftrag_negativer_betrag = {**TESTAUFTRAG, "amount": -50.0}
+
+    verarbeite_zahlung(mock_kanal, mock_methode, None, json.dumps(auftrag_negativer_betrag).encode())
+
+    mock_kanal.basic_ack.assert_not_called()
+    mock_kanal.basic_nack.assert_called_once_with(delivery_tag=9, requeue=False)
 
 
 def test_protokolliere_status_schreibt_eintrag(tmp_path, monkeypatch):

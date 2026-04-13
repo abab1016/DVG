@@ -79,6 +79,18 @@ def test_rechnung_speichern_leerzeichen_id(tmp_path, monkeypatch):
     assert kontext.statuscode == grpc.StatusCode.INVALID_ARGUMENT
 
 
+def test_rechnung_speichern_doppelte_id(tmp_path, monkeypatch):
+    monkeypatch.setattr("server.SPEICHER", tmp_path)
+    dienst = RechnungsService()
+
+    dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, ScheinKontext())
+
+    kontext = ScheinKontext()
+    dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, kontext)
+
+    assert kontext.statuscode == grpc.StatusCode.ALREADY_EXISTS
+
+
 def test_rechnung_abrufen_gefunden(tmp_path, monkeypatch):
     monkeypatch.setattr("server.SPEICHER", tmp_path)
     dienst = RechnungsService()

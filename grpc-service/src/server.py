@@ -35,6 +35,10 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
 
         try:
             datei = SPEICHER / f"{request.invoiceId}.json"
+            if datei.exists():
+                context.set_code(grpc.StatusCode.ALREADY_EXISTS)
+                context.set_details(f"Rechnung {request.invoiceId} existiert bereits.")
+                return invoice_pb2.SpeicherAntwort()
             datei.write_text(json.dumps(daten, indent=2), encoding="utf-8")
             print(f"[gRPC-Server] Gespeichert: {request.invoiceId}")
         except Exception as e:
@@ -49,7 +53,7 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
         )
 
     def HoleRechnungsmetadaten(self, request, context):
-        datei = SPEICHER / f"{request.invoiceId}.json"
+        datei: Path = SPEICHER / f"{request.invoiceId}.json"
         if not datei.exists():
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(f"{request.invoiceId} nicht gefunden.")

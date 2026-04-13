@@ -32,19 +32,31 @@ def protokolliere_status(auftrag: dict, status: str):
     LOG_DATEI.write_text(json.dumps(protokoll, indent=2), encoding="utf-8")
 
 
+PFLICHTFELDER = ["invoiceId", "supplierName", "iban", "amount", "currency", "dueDate"]
+
+
+def validiere_auftrag(auftrag: dict) -> str | None:
+    for feld in PFLICHTFELDER:
+        if feld not in auftrag or auftrag[feld] == "" or auftrag[feld] is None:
+            return f"Pflichtfeld fehlt oder ist leer: '{feld}'"
+    if not isinstance(auftrag["amount"], (int, float)) or auftrag["amount"] <= 0:
+        return f"Ungültiger Betrag: {auftrag['amount']!r} (muss > 0 sein)"
+    if not str(auftrag["iban"]).strip():
+        return "IBAN darf nicht leer sein"
+    return None
+
+
 def verarbeite_zahlung(kanal, methode, eigenschaften, nachricht):
     try:
         auftrag = json.loads(nachricht)
-    except json.JSONDecodeError:
-        print("[Zahlungssystem] [FEHLER] Ungültige JSON-Nachricht empfangen.")
+    except json.JSONDecodeError as e:
+        print(f"[Zahlungssystem] Ungültige JSON-Nachricht, wird verworfen: {e}")
         kanal.basic_nack(delivery_tag=methode.delivery_tag, requeue=False)
         return
 
-    erforderliche_felder = ["invoiceId", "supplierName", "iban", "amount", "currency", "dueDate"]
-    fehlende_felder = [feld for feld in erforderliche_felder if feld not in auftrag]
-    
-    if fehlende_felder:
-        print(f"[Zahlungssystem] [FEHLER] Fehlerhafte Nachricht. Es fehlen Felder: {fehlende_felder}")
+    fehler = validiere_auftrag(auftrag)
+    if fehler:
+        print(f"[Zahlungssystem] Validierungsfehler — Auftrag wird verworfen: {fehler}")
         kanal.basic_nack(delivery_tag=methode.delivery_tag, requeue=False)
         return
 

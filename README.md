@@ -62,14 +62,14 @@ Bereit, wenn `[gRPC-Server] Läuft auf Port 50051` erscheint.
 
 **Terminal 3 — Zahlungssystem**
 ```bash
-cd zahlungssystem/scr
+cd zahlungssystem/src
 python consumer.py
 ```
 Bereit, wenn `Warte auf Nachrichten in 'zahlungsauftraege' ...` erscheint.
 
 **Terminal 4 — Client**
 ```bash
-cd client/scr
+cd client/src
 
 # Interaktives Menü:
 python ui.py
@@ -78,7 +78,7 @@ python ui.py
 python client.py
 
 # Eigene Rechnung aus Datei:
-python client.py --datei meine-rechnung.json
+python client.py --file meine-rechnung.json
 ```
 
 ## Client verwenden
@@ -98,8 +98,8 @@ Option 1 lädt die eingebaute Demo-Rechnung (Muster GmbH, 1190,50 EUR) und fragt
 
 **Rechnung direkt aus Datei verarbeiten (`client.py`):**
 ```bash
-cd client/scr
-python client.py --datei /pfad/zur/rechnung.json
+cd client/src
+python client.py --file /pfad/zur/rechnung.json
 ```
 
 Wenn der gRPC-Service nicht erreichbar ist, bricht der Client mit einer klaren Fehlermeldung ab. Die Zahlung wird nur ausgelöst, wenn das Speichern zuvor erfolgreich war.
@@ -163,17 +163,17 @@ Unter `http://localhost:15672` gibt es eine grafische Oberfläche (Benutzer: `gu
 ## Tests
 
 ```bash
-python -m pytest grpc-service/tests/ client/scr/tests/ zahlungssystem/scr/tests/ -v
+python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/ -v
 ```
 
-24 Tests, kein laufender Service nötig — gRPC und RabbitMQ werden simuliert.
+27 Tests, kein laufender Service nötig — gRPC und RabbitMQ werden simuliert.
 
 | Testdatei | Tests | Inhalt |
 |---|---|---|
-| `grpc-service/tests/test_server.py` | 6 | Speichern, Datei anlegen, leere ID, Leerzeichen-ID, Abrufen, nicht gefunden |
-| `client/scr/tests/test_grpc_client.py` | 6 | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe, `success=False` |
-| `client/scr/tests/test_payment_producer.py` | 7 | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler |
-| `zahlungssystem/scr/tests/test_consumer.py` | 5 | Bestätigung, Ausgabe, JSON-Fehler, Eintrag schreiben, Einträge anhängen |
+| `grpc-service/tests/test_server.py` | 7 | Speichern, Datei anlegen, leere ID, Leerzeichen-ID, doppelte ID, Abrufen, nicht gefunden |
+| `client/src/tests/test_grpc_client.py` | 6 | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe, `success=False` |
+| `client/src/tests/test_payment_producer.py` | 7 | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler |
+| `zahlungssystem/src/tests/test_consumer.py` | 7 | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
 
 ## gRPC-Schnittstelle
 
@@ -208,14 +208,14 @@ DVG/
       test_server.py
     requirements.txt
   zahlungssystem/
-    scr/
+    src/
       consumer.py              # RabbitMQ-Consumer
       tests/
         conftest.py
         test_consumer.py
     requirements.txt
   client/
-    scr/
+    src/
       grpc_client.py           # gRPC-Aufruf mit Fehlerbehandlung
       payment_producer.py      # Zahlungsauftrag bauen und senden
       client.py                # nicht-interaktiver Einstiegspunkt

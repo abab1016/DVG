@@ -65,7 +65,7 @@ echo "[Demo] gRPC-Service läuft auf localhost:50051 (Prozess $GRPC_PROZESS)"
 
 # Zahlungssystem starten
 echo "[Demo] Starte Zahlungssystem ..."
-cd "$WURZELVERZEICHNIS/zahlungssystem/scr"
+cd "$WURZELVERZEICHNIS/zahlungssystem/src"
 python consumer.py > "$CONSUMER_PROTOKOLL" 2>&1 &
 CONSUMER_PROZESS=$!
 cd "$WURZELVERZEICHNIS"
@@ -80,7 +80,7 @@ echo "[Demo] Zahlungssystem läuft (Prozess $CONSUMER_PROZESS)"
 echo ""
 
 # Client starten
-cd "$WURZELVERZEICHNIS/client/scr"
+cd "$WURZELVERZEICHNIS/client/src"
 
 if [[ "$*" == *"--demo"* ]]; then
     echo "[Demo] Starte Demo-Durchlauf (nicht-interaktiv) ..."

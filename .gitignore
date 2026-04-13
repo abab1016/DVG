@@ -12,7 +12,7 @@ venv/
 env/
 
 # Laufzeitdaten
-Rechnungsdaten/zahlungslog.json
+Rechnungsdaten/
 
 # IDE
 .vscode/

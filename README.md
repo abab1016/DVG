@@ -130,6 +130,7 @@ Alle Felder müssen vorhanden sein:
   "fileName":     "rechnung_april.pdf",
   "createdAt":    "2026-04-10T09:00:00Z"
 }
+```
 
 Der Betrag im Zahlungsauftrag ist immer `amountGross`.
 
@@ -201,47 +202,13 @@ service RechnungsService {
 
 Der gRPC-Client unterscheidet folgende Fehlerfälle und gibt jeweils eine lesbare Meldung aus: `UNAVAILABLE` (Service nicht gestartet), `DEADLINE_EXCEEDED` (Antwort dauert zu lang), `INVALID_ARGUMENT` (fehlerhafte Daten), `INTERNAL` (Fehler auf Server-Seite).
 
-## Projektstruktur
-
-```
-DVG/
-  grpc-service/
-    src/
-      proto/
-        invoice.proto          # Schnittstellendefinition
-      invoice_pb2.py           # generiert
-      invoice_pb2_grpc.py      # generiert
-      server.py                # gRPC-Server
-    tests/
-      conftest.py
-      test_server.py
-    requirements.txt
-  zahlungssystem/
-    src/
-      consumer.py              # RabbitMQ-Consumer
-      tests/
-        conftest.py
-        test_consumer.py
-    requirements.txt
-  client/
-    src/
-      grpc_client.py           # gRPC-Aufruf mit Fehlerbehandlung
-      payment_producer.py      # Zahlungsauftrag bauen und senden
-      client.py                # nicht-interaktiver Einstiegspunkt
-      ui.py                    # interaktives Menü
-      tests/
-        conftest.py
-        test_grpc_client.py
-        test_payment_producer.py
-    requirements.txt
-  Rechnungsdaten/              # JSON-Dateien pro Rechnung + zahlungslog.json
-  docker-compose.yml
-  demo.sh
-```
-
 ## Team
 
-- Sam Haghighi (hasa1034)
-- Efe Yueksei (yuce1011)
-- Nick Rusna (runi1015)
-- Abubakar Abdi Tube (abab1016)
+
+| Vorname         | Nachname                        | RZ-Kürzel             |
+| ---------------- | ------------------------------- | ------------------------ |
+| Sam   | Haghigi               | hasa1034 |
+| Efe | Yueksel                             | yuce1011    |
+| Nick | Rusnak | runi1015      |
+| Abubakar Abdi | Tube | runi1015      |
+

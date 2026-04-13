@@ -185,6 +185,44 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 | `client/src/tests/test_payment_producer.py` | 7     | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler                       |
 | `zahlungssystem/src/tests/test_consumer.py` | 7     | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
 
+## Projektstruktur
+
+```
+DVG/
+  grpc-service/
+    src/
+      proto/
+        invoice.proto          # Schnittstellendefinition
+      invoice_pb2.py           # generiert
+      invoice_pb2_grpc.py      # generiert
+      server.py                # gRPC-Server
+    tests/
+      conftest.py
+      test_server.py
+    requirements.txt
+  zahlungssystem/
+    src/
+      consumer.py              # RabbitMQ-Consumer
+      tests/
+        conftest.py
+        test_consumer.py
+    requirements.txt
+  client/
+    src/
+      grpc_client.py           # gRPC-Aufruf mit Fehlerbehandlung
+      payment_producer.py      # Zahlungsauftrag bauen und senden
+      client.py                # nicht-interaktiver Einstiegspunkt
+      ui.py                    # interaktives Menü
+      tests/
+        conftest.py
+        test_grpc_client.py
+        test_payment_producer.py
+    requirements.txt
+  Rechnungsdaten/              # JSON-Dateien pro Rechnung + zahlungslog.json
+  docker-compose.yml
+  demo.sh
+```
+
 ## gRPC-Schnittstelle
 
 Definition liegt in `grpc-service/src/proto/invoice.proto`:

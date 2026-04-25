@@ -130,6 +130,7 @@ Alle Felder müssen vorhanden sein:
   "fileName":     "rechnung_april.pdf",
   "createdAt":    "2026-04-10T09:00:00Z"
 }
+```
 
 Der Betrag im Zahlungsauftrag ist immer `amountGross`.
 
@@ -184,23 +185,6 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 | `client/src/tests/test_payment_producer.py` | 7     | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler                       |
 | `zahlungssystem/src/tests/test_consumer.py` | 7     | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
 
-## gRPC-Schnittstelle
-
-Definition liegt in `grpc-service/src/proto/invoice.proto`:
-
-```protobuf
-service RechnungsService {
-  rpc SpeichereRechnungsmetadaten (Rechnungsmetadaten) returns (SpeicherAntwort);
-  rpc HoleRechnungsmetadaten      (RechnungsAnfrage)   returns (Rechnungsmetadaten);
-}
-```
-
-`SpeichereRechnungsmetadaten` speichert eine Rechnung und gibt die bestätigte Rechnungs-ID zurück. Leere Rechnungs-ID bekommt `INVALID_ARGUMENT` zurück.
-
-`HoleRechnungsmetadaten` liest eine gespeicherte Rechnung anhand der ID. Existiert sie nicht, kommt `NOT_FOUND`.
-
-Der gRPC-Client unterscheidet folgende Fehlerfälle und gibt jeweils eine lesbare Meldung aus: `UNAVAILABLE` (Service nicht gestartet), `DEADLINE_EXCEEDED` (Antwort dauert zu lang), `INVALID_ARGUMENT` (fehlerhafte Daten), `INTERNAL` (Fehler auf Server-Seite).
-
 ## Projektstruktur
 
 ```
@@ -239,9 +223,30 @@ DVG/
   demo.sh
 ```
 
+## gRPC-Schnittstelle
+
+Definition liegt in `grpc-service/src/proto/invoice.proto`:
+
+```protobuf
+service RechnungsService {
+  rpc SpeichereRechnungsmetadaten (Rechnungsmetadaten) returns (SpeicherAntwort);
+  rpc HoleRechnungsmetadaten      (RechnungsAnfrage)   returns (Rechnungsmetadaten);
+}
+```
+
+`SpeichereRechnungsmetadaten` speichert eine Rechnung und gibt die bestätigte Rechnungs-ID zurück. Leere Rechnungs-ID bekommt `INVALID_ARGUMENT` zurück.
+
+`HoleRechnungsmetadaten` liest eine gespeicherte Rechnung anhand der ID. Existiert sie nicht, kommt `NOT_FOUND`.
+
+Der gRPC-Client unterscheidet folgende Fehlerfälle und gibt jeweils eine lesbare Meldung aus: `UNAVAILABLE` (Service nicht gestartet), `DEADLINE_EXCEEDED` (Antwort dauert zu lang), `INVALID_ARGUMENT` (fehlerhafte Daten), `INTERNAL` (Fehler auf Server-Seite).
+
 ## Team
 
-- Sam Haghighi (hasa1034)
-- Efe Yueksei (yuce1011)
-- Nick Rusna (runi1015)
-- Abubakar Abdi Tube (abab1016)
+
+| Vorname         | Nachname                        | RZ-Kürzel             |
+| ---------------- | ------------------------------- | ------------------------ |
+| Sam   | Haghigi               | hasa1034 |
+| Efe | Yueksel                             | yuce1011    |
+| Nick | Rusnak | runi1015      |
+| Abubakar Abdi | Tube | runi1015      |
+

@@ -1,4 +1,4 @@
-# Sprint 1 — Dokumentation
+# Sprint 1 — Bausteine und Integrationsarchitektur
 
 **Projekt:** DVG — Digitalisierung Eingangsrechnungsbearbeitung  
 **Sprint-Zeitraum:** April 2026  

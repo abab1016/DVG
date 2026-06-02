@@ -1,0 +1,52 @@
+
+
+SZENARIO 1: Normalfall (kein Compliance) 
+
+Rechnungs-ID:     RE-2024-001
+Rechnungsnummer:  2024-001
+Lieferantenname:  Mustermann GmbH
+Lieferanten-Mail: info@mustermann.de
+Rechnungsdatum:   2024-01-10
+Fälligkeitsdatum: 2024-02-10
+Nettobetrag:      840
+Bruttobetrag:     1000
+Währung:          EUR
+IBAN:             DE89370400440532013000
+PDF-Name:         rechnung.pdf
+=> Erwartung: Direkt zur Rechnungsprüfung, KEIN Compliance-Schritt
+
+SZENARIO 2: Hoher Betrag (Compliance pflicht)
+ 
+Rechnungs-ID:     RE-2024-002
+Rechnungsnummer:  2024-002
+Lieferantenname:  Großlieferant AG
+Lieferanten-Mail: ag@grosslieferant.de
+Rechnungsdatum:   2024-01-15
+Fälligkeitsdatum: 2024-03-01
+Nettobetrag:      12500
+Bruttobetrag:     14875
+Währung:          EUR
+IBAN:             DE89370400440532013000
+PDF-Name:         rechnung.pdf
+=> Erwartung: Compliance-Prüfung wird automatisch ausgelöst (>10.000 EUR)
+
+SZENARIO 3: Unbekannter Lieferant (Compliance pflicht)
+
+Rechnungs-ID:     RE-2024-003
+Rechnungsnummer:  2024-003
+Lieferantenname:  Neu
+Lieferanten-Mail: neu@lieferant.de
+Rechnungsdatum:   2024-01-20
+Fälligkeitsdatum: 2024-02-20
+Nettobetrag:      500
+Bruttobetrag:     595
+Währung:          EUR
+IBAN:             DE89370400440532013000
+PDF-Name:         rechnung.pdf
+=> Erwartung: Compliance-Prüfung wegen unbekanntem Lieferant ("Neu")
+
+
+
+  LOGIN: demo / demo
+  Tasklist: http://localhost:8082
+  Operate:  http://localhost:8081

@@ -1,26 +1,30 @@
-# DVG — Digitalisierung Eingangsrechnungsbearbeitung
+# DVG: Digitalisierung Eingangsrechnungsbearbeitung
 
-Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung. Rechnungsmetadaten werden per gRPC gespeichert, der Zahlungsauftrag geht asynchron über RabbitMQ ans Zahlungssystem.
+Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung. Ein Camunda-8-Workflow steuert den Ablauf: Rechnungsmetadaten werden per gRPC gespeichert, der Zahlungsauftrag geht asynchron über RabbitMQ ans Zahlungssystem.
 
 ## Architektur
 
 ![Architekturdiagramm](images/README/1775498351364.png)
 
-Der Ablauf teilt sich in zwei Schritte auf:
+Seit Sprint 4 orchestriert **Camunda 8** den Prozess. Ein Python-Worker (`pyzeebe`) abonniert die Service-Tasks des BPMN-Modells und ruft die in Sprint 1 gebauten Bausteine auf:
 
-Zuerst schickt der Client die Rechnungsmetadaten per gRPC an den Service. Der Service prüft die Eingabe, legt eine JSON-Datei an und gibt die bestätigte Invoice-ID zurück. Erst wenn das geklappt hat, geht es weiter.
+Im Service-Task `save-invoice-metadata` schickt der Worker die Rechnungsmetadaten per gRPC an den Service. Der Service prüft die Eingabe, legt eine JSON-Datei an und gibt die bestätigte Invoice-ID zurück.
 
-Im zweiten Schritt baut der Client mit der bestätigten ID einen Zahlungsauftrag und schreibt ihn in die RabbitMQ-Warteschlange `zahlungsauftraege`. Das Zahlungssystem liest die Nachricht, gibt sie aus und protokolliert den Status in `Rechnungsdaten/zahlungslog.json`.
+Im Service-Task `send-payment-order` baut der Worker mit der bestätigten ID einen Zahlungsauftrag und schreibt ihn in die RabbitMQ-Warteschlange `zahlungsauftraege`. Das Zahlungssystem liest die Nachricht und protokolliert den Status in `Rechnungsdaten/zahlungslog.json`.
+
+Im Service-Task `archive-invoice` schreibt der Worker zum Abschluss eine Datei `Rechnungsdaten/<invoiceId>_abschluss.json`.
+
+Fachliche Fehler (ungültige Daten, Duplikate) wirft der Worker als BPMN-`BusinessError` an ein Error-Boundary-Event; technische Fehler (gRPC/RabbitMQ nicht erreichbar) führen zu Zeebe-Retry und ggf. einem Incident.
 
 ## Voraussetzungen
 
 - Python 3.9 oder neuer
-- Docker Desktop (für RabbitMQ)
+- Docker Desktop (für RabbitMQ und Camunda 8)
 
 Abhängigkeiten installieren:
 
 ```bash
-pip install grpcio grpcio-tools pika pytest
+pip install grpcio grpcio-tools pika pyzeebe pytest pytest-asyncio
 ```
 
 Proto-Stubs generieren — das muss einmalig gemacht werden, und wieder wenn sich `invoice.proto` ändert:
@@ -35,24 +39,28 @@ python -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/in
 Am einfachsten geht es mit dem Demo-Skript, das alles in der richtigen Reihenfolge startet:
 
 ```bash
-# Interaktives Menü:
 bash demo.sh
-
-# Demo-Rechnung direkt durchlaufen, ohne Menü:
-bash demo.sh --demo
 ```
 
-Das Skript startet RabbitMQ, wartet bis es bereit ist, dann gRPC-Service und Zahlungssystem im Hintergrund, und öffnet schließlich den Client. Strg+C beendet alles sauber.
+Das Skript startet RabbitMQ und Camunda 8 (Zeebe/Operate/Tasklist), wartet bis Zeebe bereit ist, startet dann gRPC-Service und Zahlungssystem im Hintergrund und schließlich den pyzeebe-Worker im Vordergrund. Strg+C beendet die Hintergrundprozesse sauber.
+
+Der Worker wartet anschließend auf Jobs. Um den Prozess auszulösen:
+
+1. BPMN `images/Eingangsrechnungsbearbeitung.bpmn` im Camunda Modeler auf Zeebe (`localhost:26500`) deployen.
+2. Prozessinstanz mit den Rechnungs-Variablen starten (siehe [Prozessvariablen](#prozessvariablen)).
+3. Ablauf in Operate (`http://localhost:8081`, Login `demo`/`demo`) verfolgen.
 
 ## Manuell starten
 
-Wer die einzelnen Komponenten lieber selbst starten will, braucht vier Terminals. Die Reihenfolge ist wichtig: RabbitMQ muss vor dem Consumer laufen, der gRPC-Service vor dem Client.
+Wer die Komponenten lieber selbst startet, braucht mehrere Terminals. Reihenfolge: RabbitMQ vor dem Consumer, Camunda und gRPC-Service vor dem Worker.
 
-**Terminal 1 — RabbitMQ**
+**Terminal 1 — RabbitMQ + Camunda 8**
 
 ```bash
-docker compose up -d rabbitmq
+docker compose up -d rabbitmq elasticsearch zeebe operate tasklist
 ```
+
+Bereit, wenn `http://localhost:9600/actuator/health` `UP` liefert. Operate: `http://localhost:8081`, Tasklist: `http://localhost:8082` (jeweils `demo`/`demo`).
 
 **Terminal 2 — gRPC-Service**
 
@@ -72,48 +80,18 @@ python consumer.py
 
 Bereit, wenn `Warte auf Nachrichten in 'zahlungsauftraege' ...` erscheint.
 
-**Terminal 4 — Client**
+**Terminal 4 — Worker**
 
 ```bash
-cd client/src
-
-# Interaktives Menü:
-python ui.py
-
-# Demo-Rechnung direkt:
-python client.py
-
-# Eigene Rechnung aus Datei:
-python client.py --file meine-rechnung.json
+cd worker/src
+python worker.py
 ```
 
-## Client verwenden
+Bereit, wenn `Worker bereit, abonniere Job-Types: save-invoice-metadata, send-payment-order, archive-invoice` erscheint. Details zum Worker in [`worker/README.md`](worker/README.md).
 
-Der Client ist der Einstiegspunkt für Benutzer. Er erfasst Rechnungsdaten, speichert sie per gRPC und löst die Zahlung aus.
+## Prozessvariablen
 
-**Interaktives Menü (`ui.py`):**
-
-```
-  [1]  Demo-Rechnung verarbeiten
-  [2]  Rechnung manuell eingeben
-  [3]  Rechnung aus JSON-Datei laden
-  [0]  Beenden
-```
-
-Option 1 lädt die eingebaute Demo-Rechnung (Muster GmbH, 1190,50 EUR) und fragt kurz nach Bestätigung. Option 2 fragt alle Felder ab, bei jedem steht der Standardwert in Klammern — Enter übernimmt ihn einfach. Option 3 erwartet den Pfad zu einer JSON-Datei.
-
-**Rechnung direkt aus Datei verarbeiten (`client.py`):**
-
-```bash
-cd client/src
-python client.py --file /pfad/zur/rechnung.json
-```
-
-Wenn der gRPC-Service nicht erreichbar ist, bricht der Client mit einer klaren Fehlermeldung ab. Die Zahlung wird nur ausgelöst, wenn das Speichern zuvor erfolgreich war.
-
-## Eigene Rechnung als JSON
-
-Alle Felder müssen vorhanden sein:
+Die Prozessinstanz wird mit diesen Variablen gestartet. Pflichtfelder für `save-invoice-metadata` und `send-payment-order`:
 
 ```json
 {
@@ -126,22 +104,24 @@ Alle Felder müssen vorhanden sein:
   "amountGross":  595.00,
   "currency":     "EUR",
   "iban":         "DE12345678901234567890",
-  "status":       "OPEN",
-  "fileName":     "rechnung_april.pdf",
-  "createdAt":    "2026-04-10T09:00:00Z"
+  "channel":      "EMAIL",
+  "invoiceNumber":"RE-2026-099",
+  "fileName":     "rechnung_april.pdf"
 }
 ```
 
-Der Betrag im Zahlungsauftrag ist immer `amountGross`.
+Der Betrag im Zahlungsauftrag ist immer `amountGross`. Die genaue Feldzuordnung (welche Variable in welchen Service-Task geht) steht in [`worker/BPMN_VERTRAG.md`](worker/BPMN_VERTRAG.md).
 
 ## Gespeicherte Dateien
 
 Der Ordner `Rechnungsdaten/` wird automatisch angelegt. Darin liegt nach einem Durchlauf:
 
-- `INV-2026-001.json` — die Rechnungsmetadaten, die der gRPC-Service gespeichert hat
+- `<invoiceId>.json` — die Rechnungsmetadaten, die der gRPC-Service gespeichert hat
 - `zahlungslog.json` — das Protokoll des Zahlungssystems, wird bei jeder Zahlung erweitert
+- `<invoiceId>_abschluss.json` — die Abschlussdatei, die der Worker beim Archivieren schreibt
 
 Das Statusprotokoll sieht so aus:
+
 ```json
 [
   {
@@ -159,23 +139,24 @@ Das Statusprotokoll sieht so aus:
 Ohne Konfiguration funktioniert alles mit den Standardwerten. Für andere Setups:
 
 
-| Variable         | Standard                        | Beschreibung             |
-| ---------------- | ------------------------------- | ------------------------ |
-| `GRPC_ADRESSE`   | `localhost:50051`               | Adresse des gRPC-Service |
-| `GRPC_ZEITLIMIT` | `5`                             | Zeitlimit in Sekunden    |
-| `BROKER_ADRESSE` | `amqp://guest:guest@localhost/` | RabbitMQ-Verbindung      |
+| Variable         | Standard                        | Beschreibung                        |
+| ---------------- | ------------------------------- | ----------------------------------- |
+| `ZEEBE_ADRESSE`  | `localhost:26500`               | Adresse des Zeebe-Gateways (Worker) |
+| `GRPC_ADRESSE`   | `localhost:50051`               | Adresse des gRPC-Service            |
+| `GRPC_ZEITLIMIT` | `5`                             | gRPC-Zeitlimit in Sekunden          |
+| `BROKER_ADRESSE` | `amqp://admin:admin@localhost/` | RabbitMQ-Verbindung                 |
 
 ## RabbitMQ-Verwaltungsoberfläche
 
-Unter `http://localhost:15672` gibt es eine grafische Oberfläche (Benutzer: `guest`, Passwort: `guest`). Dort ist die Warteschlange `zahlungsauftraege` mit der Anzahl wartender Nachrichten sichtbar.
+Unter `http://localhost:15672` gibt es eine grafische Oberfläche (Benutzer: `admin`, Passwort: `admin`). Dort ist die Warteschlange `zahlungsauftraege` mit der Anzahl wartender Nachrichten sichtbar.
 
 ## Tests
 
 ```bash
-python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/ -v
+python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/ worker/src/tests/ -v
 ```
 
-27 Tests, kein laufender Service nötig — gRPC und RabbitMQ werden simuliert.
+68 Tests, kein laufender Service nötig gRPC, RabbitMQ und Zeebe werden simuliert.
 
 
 | Testdatei                                   | Tests | Inhalt                                                                                                                                  |
@@ -184,6 +165,11 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 | `client/src/tests/test_grpc_client.py`      | 6     | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe,`success=False`                                                       |
 | `client/src/tests/test_payment_producer.py` | 7     | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler                       |
 | `zahlungssystem/src/tests/test_consumer.py` | 7     | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
+| `worker/src/tests/test_grpc_mapping.py`     | 12    | Variablen→Proto-Mapping, Pflichtfelder, Betragsprüfung, nur Proto-Felder                                                              |
+| `worker/src/tests/test_grpc_handler.py`     | 8     | Erfolg, Fehlerklassifizierung (BusinessError vs. Retry), Null-Guard                                                                     |
+| `worker/src/tests/test_payment_mapping.py`  | 10    | Variablen→Zahlungsauftrag, Pflichtfelder, positiver Betrag, optionale Felder                                                           |
+| `worker/src/tests/test_payment_handler.py`  | 5     | Erfolg, AMQP-Fehler→Retry, Job-Variablen                                                                                               |
+| `worker/src/tests/test_archive_handler.py`  | 6     | Abschlussdatei schreiben, Null-Guard, OSError→Retry                                                                                    |
 
 ## Projektstruktur
 
@@ -197,31 +183,33 @@ DVG/
       invoice_pb2_grpc.py      # generiert
       server.py                # gRPC-Server
     tests/
-      conftest.py
-      test_server.py
-    requirements.txt
   zahlungssystem/
     src/
       consumer.py              # RabbitMQ-Consumer
       tests/
-        conftest.py
-        test_consumer.py
-    requirements.txt
   client/
     src/
-      grpc_client.py           # gRPC-Aufruf mit Fehlerbehandlung
-      payment_producer.py      # Zahlungsauftrag bauen und senden
-      client.py                # nicht-interaktiver Einstiegspunkt
-      ui.py                    # interaktives Menü
+      grpc_client.py           # gRPC-Aufruf (vom Worker genutzt)
+      payment_producer.py      # Zahlungsauftrag bauen+senden (vom Worker genutzt)
+      client.py                # Sprint-1 Standalone-Demo (Legacy)
+      ui.py                    # Sprint-1 interaktives Menü (Legacy)
       tests/
-        conftest.py
-        test_grpc_client.py
-        test_payment_producer.py
-    requirements.txt
-  Rechnungsdaten/              # JSON-Dateien pro Rechnung + zahlungslog.json
-  docker-compose.yml
+  worker/
+    src/
+      handlers/                # save-invoice-metadata, send-payment-order, archive-invoice
+      mapping/                 # Variablen <-> gRPC/RabbitMQ-Schema
+      worker.py                # pyzeebe-Worker (Einstiegspunkt)
+      tests/
+    README.md                  # Worker-Doku
+    BPMN_VERTRAG.md            # Job-Types, Fehlercodes, Prozessvariablen
+  Rechnungsdaten/              # JSON-Dateien pro Rechnung + zahlungslog.json + *_abschluss.json
+  images/
+    Eingangsrechnungsbearbeitung.bpmn   # BPMN-Modell zum Deployen
+  docker-compose.yml           # RabbitMQ + Camunda 8 (Zeebe/Operate/Tasklist)
   demo.sh
 ```
+
+`client/src/client.py` und `ui.py` sind die Standalone-Demo aus Sprint 1. Sie laufen nur, wenn man sie manuell startet, und werden vom Worker nicht benutzt  der Worker übernimmt die Orchestrierung. Zum reinen Testen von gRPC + RabbitMQ ohne Camunda funktionieren sie weiterhin.
 
 ## gRPC-Schnittstelle
 
@@ -237,16 +225,3 @@ service RechnungsService {
 `SpeichereRechnungsmetadaten` speichert eine Rechnung und gibt die bestätigte Rechnungs-ID zurück. Leere Rechnungs-ID bekommt `INVALID_ARGUMENT` zurück.
 
 `HoleRechnungsmetadaten` liest eine gespeicherte Rechnung anhand der ID. Existiert sie nicht, kommt `NOT_FOUND`.
-
-Der gRPC-Client unterscheidet folgende Fehlerfälle und gibt jeweils eine lesbare Meldung aus: `UNAVAILABLE` (Service nicht gestartet), `DEADLINE_EXCEEDED` (Antwort dauert zu lang), `INVALID_ARGUMENT` (fehlerhafte Daten), `INTERNAL` (Fehler auf Server-Seite).
-
-## Team
-
-
-| Vorname         | Nachname                        | RZ-Kürzel             |
-| ---------------- | ------------------------------- | ------------------------ |
-| Sam   | Haghigi               | hasa1034 |
-| Efe | Yueksel                             | yuce1011    |
-| Nick | Rusnak | runi1015      |
-| Abubakar Abdi | Tube | runi1015      |
-

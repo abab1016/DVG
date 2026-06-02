@@ -1,17 +1,80 @@
-version: '3.8'
-
 services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: dvg-rabbitmq
+    hostname: dvg-rabbitmq          # stabiler Node-Name, sonst aendert er sich bei jedem Neustart
     ports:
       - "5672:5672"    # AMQP
       - "15672:15672"  # Management-UI (http://localhost:15672, admin/admin)
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_ERLANG_COOKIE: "dvg-demo-cookie"   # Entrypoint schreibt das Cookie bei jedem Start mit korrekten Rechten neu -> behebt eacces
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # --- Camunda 8 (Sprint 4) ----------------------------------------------
+  # Zeebe = Workflow-Engine, Operate = Monitoring, Tasklist = User-Task-UI.
+  # Identity/Keycloak werden bewusst weggelassen; Operate/Tasklist laufen
+  # mit dem eingebauten Demo-User (demo/demo).
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: dvg-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+
+  zeebe:
+    image: camunda/zeebe:8.6.0
+    container_name: dvg-zeebe
+    ports:
+      - "26500:26500"  # gRPC-Gateway für pyzeebe-Worker
+      - "9600:9600"    # Health/Monitoring
+    environment:
+      - ZEEBE_BROKER_GATEWAY_NETWORK_HOST=0.0.0.0
+      - ZEEBE_BROKER_NETWORK_HOST=0.0.0.0
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  operate:
+    image: camunda/operate:8.6.0
+    container_name: dvg-operate
+    ports:
+      - "8081:8080"   # http://localhost:8081 (demo/demo)
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_OPERATE_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - zeebe
+      - elasticsearch
+
+  tasklist:
+    image: camunda/tasklist:8.6.0
+    container_name: dvg-tasklist
+    ports:
+      - "8082:8080"   # http://localhost:8082 (demo/demo)
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      # Zeebe-User-Tasks (Camunda 8.6) werden ueber die Zeebe-REST-API
+      # abgeschlossen/zugewiesen. Ohne diese Adresse zeigt Tasklist 500.
+      - CAMUNDA_TASKLIST_ZEEBE_RESTADDRESS=http://zeebe:8080
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_TASKLIST_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - zeebe
+      - elasticsearch

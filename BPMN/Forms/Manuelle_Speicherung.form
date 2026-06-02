@@ -1,0 +1,60 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ManuelleSpeicherung",
+  "components": [
+    {
+      "text": "### gRPC-Service nicht erreichbar\nDie automatische Metadatenspeicherung ist fehlgeschlagen. Bitte bestätigen Sie, dass die Daten anderweitig gesichert wurden.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1"
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Fehlermeldung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2"
+      },
+      "id": "Field_errorMessage",
+      "key": "errorMessage",
+      "disabled": true
+    },
+    {
+      "label": "Daten manuell gesichert *",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_metadataStored",
+      "key": "metadataStored",
+      "validate": {
+        "required": true
+      },
+      "description": "Bestätigen Sie, dass die Metadaten anderweitig gesichert wurden"
+    },
+    {
+      "label": "Kommentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_4"
+      },
+      "id": "Field_manualStorageComment",
+      "key": "manualStorageComment"
+    }
+  ],
+  "type": "default"
+}

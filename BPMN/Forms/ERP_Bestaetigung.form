@@ -1,0 +1,110 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ERPBestaetigung",
+  "components": [
+    {
+      "text": "### ERP-Erfassung bestätigen\nBitte erfassen Sie die Rechnungsdaten in der ERP-Simulationsseite und bestätigen Sie anschließend hier.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsnummer",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "disabled": true
+    },
+    {
+      "label": "Lieferant",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_2",
+        "columns": 3
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Währung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 3
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "disabled": true
+    },
+    {
+      "label": "IBAN",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "disabled": true
+    },
+    {
+      "text": "---",
+      "type": "text",
+      "id": "Field_Separator"
+    },
+    {
+      "label": "Ich bestätige die ERP-Erfassung *",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_erpEntered",
+      "key": "erpEntered",
+      "validate": {
+        "required": true
+      },
+      "description": "Haken setzen, nachdem die Daten im ERP-System erfasst wurden"
+    },
+    {
+      "label": "Kommentar zur ERP-Erfassung",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_6"
+      },
+      "id": "Field_erpComment",
+      "key": "erpComment"
+    }
+  ],
+  "type": "default"
+}

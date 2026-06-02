@@ -1,0 +1,169 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_MetadatenErfassung",
+  "components": [
+    {
+      "text": "### Rechnungsmetadaten erfassen\nBitte alle Pflichtfelder (*) aus der Rechnung übertragen.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "validate": {
+        "required": true
+      },
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsnummer *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "validate": {
+        "required": true
+      },
+      "description": "z.B. RE-2026-7781"
+    },
+    {
+      "label": "Lieferantenname *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Lieferanten-E-Mail",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierEmail",
+      "key": "supplierEmail"
+    },
+    {
+      "label": "Rechnungsdatum *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_invoiceDate",
+      "key": "invoiceDate",
+      "description": "JJJJ-MM-TT",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Fälligkeitsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_dueDate",
+      "key": "dueDate",
+      "description": "JJJJ-MM-TT"
+    },
+    {
+      "label": "Nettobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountNet",
+      "key": "amountNet"
+    },
+    {
+      "label": "Bruttobetrag *",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Währung *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "defaultValue": "EUR",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "IBAN *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "validate": {
+        "required": true
+      },
+      "description": "Zahlungsempfänger-IBAN"
+    },
+    {
+      "label": "Dateiname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_fileName",
+      "key": "fileName"
+    },
+    {
+      "label": "Eingangskanal *",
+      "type": "select",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_channel",
+      "key": "channel",
+      "defaultValue": "EMAIL",
+      "validate": {
+        "required": true
+      },
+      "valuesExpression": "=[{\"label\": \"E-Mail\", \"value\": \"EMAIL\"}, {\"label\": \"EDI\", \"value\": \"EDI\"}]"
+    }
+  ],
+  "type": "default"
+}

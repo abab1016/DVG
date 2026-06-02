@@ -1,0 +1,100 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ComplianceCheck",
+  "components": [
+    {
+      "text": "### Compliance Check\nBitte prüfen Sie die Rechnung auf Compliance-Konformität.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Lieferant",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Währung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "disabled": true
+    },
+    {
+      "label": "IBAN",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "disabled": true
+    },
+    {
+      "text": "---\n**Compliance-Entscheidung:**",
+      "type": "text",
+      "id": "Field_Separator"
+    },
+    {
+      "label": "Compliance-Entscheidung *",
+      "type": "select",
+      "layout": {
+        "row": "Row_4"
+      },
+      "id": "Field_complianceDecision",
+      "key": "complianceDecision",
+      "validate": {
+        "required": true
+      },
+      "valuesExpression": "=[{\"label\": \"✅ Bestanden (PASSED)\", \"value\": \"PASSED\"}, {\"label\": \"❌ Nicht bestanden (FAILED)\", \"value\": \"FAILED\"}]"
+    },
+    {
+      "label": "Compliance-Kommentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_complianceComment",
+      "key": "complianceComment"
+    }
+  ],
+  "type": "default"
+}

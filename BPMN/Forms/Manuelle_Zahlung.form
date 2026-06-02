@@ -1,0 +1,110 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ManuelleZahlung",
+  "components": [
+    {
+      "text": "### RabbitMQ nicht erreichbar\nDer automatische Zahlungsauftrag konnte nicht gesendet werden. Bitte die Zahlung manuell erfassen.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Lieferant",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Währung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "disabled": true
+    },
+    {
+      "label": "IBAN",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 4
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "disabled": true
+    },
+    {
+      "label": "Fehlermeldung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_errorMessage",
+      "key": "errorMessage",
+      "disabled": true
+    },
+    {
+      "text": "---",
+      "type": "text",
+      "id": "Field_Separator"
+    },
+    {
+      "label": "Zahlung manuell veranlasst *",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_paymentRequested",
+      "key": "paymentRequested",
+      "validate": {
+        "required": true
+      },
+      "description": "Bestätigen Sie, dass die Zahlung manuell veranlasst wurde"
+    },
+    {
+      "label": "Kommentar zur manuellen Zahlung",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_6"
+      },
+      "id": "Field_manualPaymentComment",
+      "key": "manualPaymentComment"
+    }
+  ],
+  "type": "default"
+}

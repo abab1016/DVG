@@ -1,0 +1,52 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_Rueckfrage",
+  "components": [
+    {
+      "text": "### Informationen nachfordern\nDer Prüfer hat zusätzliche Informationen angefordert.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1"
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Kommentar des Prüfers",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_2"
+      },
+      "id": "Field_approvalComment",
+      "key": "approvalComment",
+      "disabled": true,
+      "description": "Begründung für die Rückfrage"
+    },
+    {
+      "label": "Antwort / Ergänzung *",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_infoResponseComment",
+      "key": "infoResponseComment",
+      "validate": {
+        "required": true
+      },
+      "description": "Bitte die fehlenden Informationen hier ergänzen"
+    }
+  ],
+  "type": "default"
+}

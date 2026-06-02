@@ -1,0 +1,125 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_RechnungsPruefung",
+  "components": [
+    {
+      "text": "### Rechnungsprüfung & Freigabe\nBitte prüfen Sie die Rechnungsdaten und treffen Sie eine Entscheidung.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "text": "**Rechnungsdaten zur Prüfung:**",
+      "type": "text",
+      "id": "Field_SubHeader"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsnummer",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "disabled": true
+    },
+    {
+      "label": "Lieferant",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_2",
+        "columns": 3
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Währung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 3
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "disabled": true
+    },
+    {
+      "label": "IBAN",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "disabled": true
+    },
+    {
+      "text": "---\n**Entscheidung:**",
+      "type": "text",
+      "id": "Field_Separator"
+    },
+    {
+      "label": "Freigabeentscheidung *",
+      "type": "select",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_approvalDecision",
+      "key": "approvalDecision",
+      "validate": {
+        "required": true
+      },
+      "valuesExpression": "=[{\"label\": \"✅ Freigegeben (APPROVED)\", \"value\": \"APPROVED\"}, {\"label\": \"❌ Abgelehnt (REJECTEDejected)\", \"value\": \"REJECTED\"}, {\"label\": \"❓ Rückfrage nötig (INFO_REQUIRED)\", \"value\": \"INFO_REQUIRED\"}]"
+    },
+    {
+      "label": "Compliance Check anfordern?",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_6"
+      },
+      "id": "Field_complianceRequired",
+      "key": "complianceRequired",
+      "description": "Manuell eine zusätzliche Compliance-Prüfung anfordern"
+    },
+    {
+      "label": "Begründung / Kommentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_7"
+      },
+      "id": "Field_approvalComment",
+      "key": "approvalComment"
+    }
+  ],
+  "type": "default"
+}

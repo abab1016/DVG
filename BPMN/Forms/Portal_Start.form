@@ -1,0 +1,173 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_PortalStart",
+  "components": [
+    {
+      "text": "### Rechnungsportal - Neue Rechnung einreichen\nBitte füllen Sie das Online-Formular vollständig aus. Die Daten werden automatisch verarbeitet.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "label": "Rechnungs-ID (Eindeutig) *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "description": "z.B. INV-2026-001",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Rechnungsnummer *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "validate": {
+        "required": true
+      },
+      "description": "z.B. RE-2026-7781"
+    },
+    {
+      "label": "Lieferantenname *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Lieferanten-E-Mail *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierEmail",
+      "key": "supplierEmail",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Rechnungsdatum *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_invoiceDate",
+      "key": "invoiceDate",
+      "description": "JJJJ-MM-TT",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Fälligkeitsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_dueDate",
+      "key": "dueDate",
+      "description": "JJJJ-MM-TT"
+    },
+    {
+      "label": "Nettobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountNet",
+      "key": "amountNet"
+    },
+    {
+      "label": "Bruttobetrag *",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Währung *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "defaultValue": "EUR",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "IBAN *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "validate": {
+        "required": true
+      },
+      "description": " z.B. DE89 3704 0044 0532 0130 00"
+    },
+    {
+      "label": "Dateiname der PDF *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_fileName",
+      "key": "fileName",
+      "defaultValue": "rechnung.pdf",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Eingangskanal",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_channel",
+      "key": "channel",
+      "defaultValue": "PORTAL",
+      "disabled": true
+    }
+  ],
+  "type": "default"
+}

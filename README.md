@@ -171,43 +171,7 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 | `worker/src/tests/test_payment_handler.py`  | 5     | Erfolg, AMQP-Fehler→Retry, Job-Variablen                                                                                               |
 | `worker/src/tests/test_archive_handler.py`  | 6     | Abschlussdatei schreiben, Null-Guard, OSError→Retry                                                                                    |
 
-## Projektstruktur
 
-```
-DVG/
-  grpc-service/
-    src/
-      proto/
-        invoice.proto          # Schnittstellendefinition
-      invoice_pb2.py           # generiert
-      invoice_pb2_grpc.py      # generiert
-      server.py                # gRPC-Server
-    tests/
-  zahlungssystem/
-    src/
-      consumer.py              # RabbitMQ-Consumer
-      tests/
-  client/
-    src/
-      grpc_client.py           # gRPC-Aufruf (vom Worker genutzt)
-      payment_producer.py      # Zahlungsauftrag bauen+senden (vom Worker genutzt)
-      client.py                # Sprint-1 Standalone-Demo (Legacy)
-      ui.py                    # Sprint-1 interaktives Menü (Legacy)
-      tests/
-  worker/
-    src/
-      handlers/                # save-invoice-metadata, send-payment-order, archive-invoice
-      mapping/                 # Variablen <-> gRPC/RabbitMQ-Schema
-      worker.py                # pyzeebe-Worker (Einstiegspunkt)
-      tests/
-    README.md                  # Worker-Doku
-    BPMN_VERTRAG.md            # Job-Types, Fehlercodes, Prozessvariablen
-  Rechnungsdaten/              # JSON-Dateien pro Rechnung + zahlungslog.json + *_abschluss.json
-  images/
-    Eingangsrechnungsbearbeitung.bpmn   # BPMN-Modell zum Deployen
-  docker-compose.yml           # RabbitMQ + Camunda 8 (Zeebe/Operate/Tasklist)
-  demo.sh
-```
 
 `client/src/client.py` und `ui.py` sind die Standalone-Demo aus Sprint 1. Sie laufen nur, wenn man sie manuell startet, und werden vom Worker nicht benutzt  der Worker übernimmt die Orchestrierung. Zum reinen Testen von gRPC + RabbitMQ ohne Camunda funktionieren sie weiterhin.
 

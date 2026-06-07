@@ -167,6 +167,28 @@
       "key": "channel",
       "defaultValue": "PORTAL",
       "disabled": true
+    },
+    {
+      "label": "Rechnungsadresse *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_7"
+      },
+      "id": "Field_billingAddress",
+      "key": "billingAddress",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Rechnungspositionen",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "key": "invoiceItems",
+      "description": "Positionen (Format: - Beschreibung: Menge x Preis)"
     }
   ],
   "type": "default"

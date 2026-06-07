@@ -19,6 +19,10 @@ def protokolliere_status(auftrag: dict, status: str):
         "betrag":    auftrag["amount"],
         "waehrung":  auftrag["currency"],
     }
+    if "billingAddress" in auftrag:
+        eintrag["billingAddress"] = auftrag["billingAddress"]
+    if "items" in auftrag:
+        eintrag["items"] = auftrag["items"]
 
     protokoll = []
     if LOG_DATEI.exists():
@@ -66,6 +70,10 @@ def verarbeite_zahlung(kanal, methode, eigenschaften, nachricht):
     print(f"  IBAN         : {auftrag['iban']}")
     print(f"  Betrag       : {auftrag['amount']} {auftrag['currency']}")
     print(f"  Fällig       : {auftrag['dueDate']}")
+    if "billingAddress" in auftrag:
+        print(f"  Adresse      : {auftrag['billingAddress']}")
+    if "items" in auftrag and auftrag["items"]:
+        print(f"  Positionen   : {json.dumps(auftrag['items'], indent=2)}")
 
     protokolliere_status(auftrag, "RECEIVED")
     time.sleep(0.5) # Simuliere kurze Bearbeitungszeit

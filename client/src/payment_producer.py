@@ -8,16 +8,21 @@ WARTESCHLANGE = "zahlungsauftraege"
 
 
 def erstelle_zahlungsauftrag(rechnung: dict, bestaetigte_id: str) -> dict:
-    return {
+    payload = {
         "invoiceId":    bestaetigte_id,
-        "supplierId":   rechnung["supplierId"],
-        "supplierName": rechnung["supplierName"],
-        "iban":         rechnung["iban"],
-        "amount":       rechnung["amountGross"],
-        "currency":     rechnung["currency"],
-        "dueDate":      rechnung["dueDate"],
+        "supplierId":   rechnung.get("supplierId", ""),
+        "supplierName": rechnung.get("supplierName", ""),
+        "iban":         rechnung.get("iban", ""),
+        "amount":       rechnung.get("amountGross", 0.0),
+        "currency":     rechnung.get("currency", "EUR"),
+        "dueDate":      rechnung.get("dueDate", ""),
         "timestamp":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+    if "billingAddress" in rechnung:
+        payload["billingAddress"] = rechnung["billingAddress"]
+    if "items" in rechnung:
+        payload["items"] = rechnung["items"]
+    return payload
 
 
 def sende_zahlungsauftrag(rechnung: dict, bestaetigte_id: str):

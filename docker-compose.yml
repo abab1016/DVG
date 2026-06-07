@@ -23,6 +23,8 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: dvg-elasticsearch
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -78,3 +80,6 @@ services:
     depends_on:
       - zeebe
       - elasticsearch
+
+volumes:
+  es-data:

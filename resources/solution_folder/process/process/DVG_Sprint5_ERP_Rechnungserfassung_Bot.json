@@ -1,0 +1,60 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+    "kind": "process",
+    "type": "process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "8f280d7b-2a6d-48e3-8c89-9dd5fdbea10d",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "entryPointUniqueId": null,
+      "inputArgumentsSchema": null,
+      "inputArgumentsSchemaV2": null,
+      "type": "Process",
+      "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+      "description": null,
+      "package": {
+        "key": "23929880-6523-42ef-b908-bb6175722ba0"
+      },
+      "packageName": "Solution.process.DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+      "packageVersion": null,
+      "entryPointName": null,
+      "inputArguments": "{}",
+      "jobPriority": "Medium",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "jobRecording": "Disabled",
+      "targetFrameworkValue": "Portable",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "retentionBucketRef": null,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "staleRetentionBucketRef": null,
+      "entryPoints": null,
+      "connections": null,
+      "tags": []
+    },
+    "locks": [],
+    "key": "367a513a-c630-4e2e-b06e-a63fa9c578c7"
+  }
+}

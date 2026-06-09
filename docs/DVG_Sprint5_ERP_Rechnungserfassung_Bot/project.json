@@ -1,0 +1,60 @@
+{
+  "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+  "projectId": "b75c126a-ae65-4835-89ad-7a14227d4fdc",
+  "description": "Create a UiPath Studio Web browser automation for Sprint 5 / Vorgang 3: \"UiPath-Bot zur automatisierten ERP-Erfassung implementieren\".\r\nGoal:\r\nAutomate the manual ERP invoice entry process on this website:\r\nhttps://anhe0003.github.io/this-and-that/ERP_Rechnungserfassung.html\r\nBuild one clear main workflow/sequence named:\r\nDVG_Sprint5_ERP_Rechnungserfassung_Bot\r\nImportant:\r\nUse the currently visible ERP page only.\r\nDo not use old fields.\r\nDo not use invoiceId.\r\nDo not use IBAN.\r\nDo not use amountGross.\r\nDo not use \"Rechnung erfassen\".\r\nDo not use \"Erfolg!\" success alert.\r\nDo not type into calculated fields like Netto, Steuer, Brutto, Gesamt Netto, Gesamt Steuer or Gesamt Brutto.\r\nThe actual visible page contains these fields:\r\n- Rechnungsnummer\r\n- Rechnungsdatum\r\n- Lieferantenname\r\n- Kundennummer\r\n- Zahlungsziel\r\n- Bemerkungen\r\n- Rechnungsposten table:\r\n  - Beschreibung\r\n  - Menge\r\n  - Einheit\r\n  - Einzelpreis (Netto)\r\n  - Steuer (%)\r\n- Button \"+ Neue Rechnung\"\r\n- Button \"Rechnung speichern / aktualisieren\"\r\n- Sidebar/List \"Rechnungen\"\r\nUse browser automation with stable label-based selectors.\r\nUse normal Type Into or Set Value activities.\r\nClear each field before typing.\r\nUse these fixed test data variables at the beginning of the workflow:\r\n- invoiceNumber = \"RE-2024-001\"\r\n- invoiceDate = \"10.01.2024\"\r\n- supplierName = \"Mustermann GmbH\"\r\n- customerNumber = \"K-001\"\r\n- paymentTerms = \"14 Tage netto\"\r\n- comment = \"Automatisch durch UiPath erfasst.\"\r\n- positionDescription = \"Musterleistung\"\r\n- quantity = \"1\"\r\n- unit = \"Stk.\"\r\n- unitPriceNet = \"840.34\"\r\nWorkflow requirements:\r\n1. Open the ERP frontend\r\n- Open the URL:\r\n  https://anhe0003.github.io/this-and-that/ERP_Rechnungserfassung.html\r\n- Use Edge or Chrome.\r\n- Maximize the browser window if possible.\r\n2. Wait until the form is ready\r\n- Use \"Check App State\" or an equivalent activity.\r\n- Wait until the page title \"ERP – Rechnungserfassung\" or the section \"Rechnungsdaten\" is visible.\r\n- Timeout: 10 seconds.\r\n- If the form is not visible after the timeout, throw an exception:\r\n  \"ERP-Formular wurde nicht geladen.\"\r\n3. Start a new invoice\r\n- Click the button \"+ Neue Rechnung\" if it is visible.\r\n4. Fill all invoice header fields\r\nUse \"Set Value\" or \"Type Into\" with \"clear field before typing\" enabled.\r\nFill:\r\n- Field \"Rechnungsnummer\" with variable invoiceNumber\r\n- Field \"Rechnungsdatum\" with variable invoiceDate\r\n- Field \"Lieferantenname\" with variable supplierName\r\n- Field \"Kundennummer\" with variable customerNumber\r\n- Field \"Zahlungsziel\" with variable paymentTerms\r\n- Field \"Bemerkungen\" with variable comment\r\n5. Fill the first invoice position row\r\nThe page already contains one editable row in the \"Rechnungsposten\" table.\r\nDo not click calculated fields.\r\nDo not type into Netto, Steuer, Brutto or totals.\r\nFill only:\r\n- Column \"Beschreibung\" with variable positionDescription\r\n- Column \"Menge\" with variable quantity\r\n- Column \"Einheit\" with variable unit\r\n- Column \"Einzelpreis (Netto)\" with variable unitPriceNet\r\n- Leave \"Steuer (%)\" at default 19 %\r\n6. Save the invoice\r\n- Click the button \"Rechnung speichern / aktualisieren\".\r\n7. Check success\r\nAfter saving, check whether the invoice number \"RE-2024-001\" appears in the left sidebar/list under \"Rechnungen\".\r\nIf \"RE-2024-001\" appears:\r\n- Log message:\r\n  \"ERP-Erfassung erfolgreich abgeschlossen.\"\r\n- Take a screenshot.\r\nIf \"RE-2024-001\" does not appear:\r\n- Throw exception:\r\n  \"ERP-Speicherung fehlgeschlagen: Rechnung erscheint nicht in der Rechnungsliste.\"\r\n8. Error handling\r\nWrap the browser automation in Try/Catch.\r\nIn the Catch block:\r\n- Log the exception message.\r\n- Take an error screenshot.\r\n- End the workflow with failed status.\r\n9. Final structure\r\nThe generated workflow should be easy to understand and demonstrate:\r\n- Assign variables\r\n- Open ERP page\r\n- Wait for form\r\n- Click \"+ Neue Rechnung\"\r\n- Fill invoice header fields\r\n- Fill first invoice position row\r\n- Click \"Rechnung speichern / aktualisieren\"\r\n- Check invoice appears in \"Rechnungen\"\r\n- Screenshot/log result\r\n- Error handling\r\nThe automation must be suitable for a Sprint Review demo.\r\nIt should run the full Happy Path without manual input after starting the bot.",
+  "main": "Main.xaml",
+  "dependencies": {
+    "UiPath.IntegrationService.Activities": "1.26.0",
+    "UiPath.System.Activities": "26.2.6",
+    "UiPath.UIAutomation.Activities": "25.10.31",
+    "UiPath.WebAPI.Activities": "2.4.0"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "26.0.0.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
+    "isAttended": false,
+    "requiresUserInteraction": false,
+    "supportsPersistence": false,
+    "workflowSerialization": "NewtonsoftJson",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true,
+    "pipType": "ChildSession"
+  },
+  "designOptions": {
+    "projectProfile": "Developement",
+    "outputType": "Process",
+    "libraryOptions": {
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "VisualBasic",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "0d5fcf26-8ec9-4094-9596-88911fd4d525",
+      "input": [],
+      "output": []
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
+  "targetFramework": "Portable"
+}

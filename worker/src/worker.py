@@ -22,6 +22,7 @@ from handlers.grpc_handler import registriere_grpc_handler
 from handlers.info_request_handler import registriere_info_request_handler
 from handlers.payment_handler import registriere_payment_handler
 from handlers.pdf_handler import registriere_pdf_handler
+from handlers.uipath_handler import registriere_uipath_handler
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
@@ -29,6 +30,22 @@ _HIER = Path(__file__).resolve().parent
 _LOG_DATEI = _HIER.parent / "worker.log"
 
 logger = logging.getLogger("worker")
+
+
+def _load_env_file() -> None:
+    """Lädt Umgebungsvariablen aus einer .env-Datei im Workspace-Wurzelverzeichnis, falls vorhanden."""
+    env_path = _HIER.parent.parent / ".env"
+    if env_path.exists():
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, value = line.split("=", 1)
+                        os.environ[key.strip()] = value.strip().strip('"').strip("'")
+            logger.info("[Env-Loader] Umgebungsvariablen erfolgreich aus .env geladen.")
+        except Exception as e:
+            logger.warning("[Env-Loader] Fehler beim Laden der .env-Datei: %s", e)
 
 
 def _logging_konfigurieren() -> None:
@@ -169,6 +186,7 @@ def _starte_http_server(loop, client) -> HTTPServer:
 
 async def main() -> None:
     _logging_konfigurieren()
+    _load_env_file()
     logger.info("Starte Worker, verbinde mit Zeebe: %s", ZEEBE_ADRESSE)
 
     kanal = create_insecure_channel(grpc_address=ZEEBE_ADRESSE)
@@ -181,6 +199,7 @@ async def main() -> None:
     registriere_payment_handler(worker)
     registriere_archive_handler(worker)
     registriere_info_request_handler(worker)
+    registriere_uipath_handler(worker)
 
     # Startet das REST-Gateway für Postman
     loop = asyncio.get_running_loop()
@@ -189,7 +208,7 @@ async def main() -> None:
     logger.info(
         "Worker bereit, abonniere Job-Types: "
         "extract-pdf-metadata, save-invoice-metadata, send-payment-order, "
-        "archive-invoice, send-information-request"
+        "archive-invoice, send-information-request, uipath-erp-erfassung"
     )
     await worker.work()
 

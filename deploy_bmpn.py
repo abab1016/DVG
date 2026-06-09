@@ -28,14 +28,16 @@ else:
     sprint_path = os.path.join(hier, "BPMN")
 
 bpmn_file = os.path.join(sprint_path, "G7_Rechnungsfreigabe.bpmn")
+bpmn_file_uipath = os.path.join(sprint_path, "G7_Rechnungsfreigabe_with_UiPath.bpmn")
 forms_dir = os.path.join(sprint_path, "Forms")
 
 print(f"[Deploy] Verwende Plattform: '{plattform}'")
-print(f"[Deploy] Lade BPMN aus: {bpmn_file}")
+print(f"[Deploy] Lade BPMN aus: {bpmn_file} und {bpmn_file_uipath}")
 print(f"[Deploy] Lade Forms aus: {forms_dir}")
 
 RESSOURCEN = [
     bpmn_file,
+    bpmn_file_uipath,
     os.path.join(forms_dir, "compliance-regeln.dmn"),
     os.path.join(forms_dir, "Compliance_Check.form"),
     os.path.join(forms_dir, "ERP_Bestaetigung.form"),

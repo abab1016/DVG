@@ -203,6 +203,16 @@
       "description": "Manuell eine zusätzliche Compliance-Prüfung anfordern"
     },
     {
+      "label": "UiPath-Bot-Fehler simulieren (ERP-Erfassung)?",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_SimulateError"
+      },
+      "id": "Field_simulateUiPathError",
+      "key": "simulateUiPathError",
+      "description": "Aktivieren, um einen Fehler des UiPath-Bots bei der ERP-Buchung zu simulieren und den manuellen Fallback zu testen"
+    },
+    {
       "label": "Begründung / Kommentar",
       "type": "textarea",
       "layout": {

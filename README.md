@@ -2,6 +2,9 @@
 
 Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung. Ein Camunda-8-Workflow steuert den Ablauf: Rechnungsmetadaten werden per gRPC gespeichert, der Zahlungsauftrag geht asynchron über RabbitMQ ans Zahlungssystem.
 
+
+Wichtig: In der plattform.txt muss entweder "mac" oder "windows" hinterlegt sein! Entscheidend ist das lokale OS.
+
 ## Architektur
 
 ![Architekturdiagramm](images/README/1775498351364.png)

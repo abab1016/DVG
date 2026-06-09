@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP-System - Rechnungsbuchung (Simulation)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(135deg, var(--accent), #60a5fa);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 600px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            margin-bottom: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        input::placeholder {
+            color: #475569;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.85rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .alert {
+            display: none;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">E</div>
+            <div class="logo-text">ERP Enterprise</div>
+        </div>
+        <div class="badge">Simulationsmodus</div>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">Eingangsrechnung buchen</h1>
+                <p class="card-subtitle">Geben Sie die freigegebenen Rechnungsmetadaten zur Erfassung im ERP-System ein.</p>
+            </div>
+
+            <div id="success-alert" class="alert alert-success">
+                <strong>Erfolg!</strong> Die Rechnung wurde erfolgreich erfasst und im ERP-System gebucht. (Status: erpEntered = true)
+            </div>
+
+            <form id="erp-form" onsubmit="event.preventDefault(); buchen();">
+                <div class="row">
+                    <div class="form-group">
+                        <label for="invoiceId">Rechnungs-ID (z. B. INV-2026-001)</label>
+                        <input type="text" id="invoiceId" placeholder="INV-YYYY-XXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="invoiceNumber">Rechnungsnummer</label>
+                        <input type="text" id="invoiceNumber" placeholder="RE-XXXX" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="supplierName">Lieferant</label>
+                    <input type="text" id="supplierName" placeholder="Muster GmbH" required>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="amountGross">Bruttobetrag (€)</label>
+                        <input type="number" id="amountGross" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="iban">IBAN</label>
+                        <input type="text" id="iban" placeholder="DE..." required>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit">Rechnung erfassen</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function buchen() {
+            const alert = document.getElementById('success-alert');
+            alert.style.display = 'block';
+            
+            // Zurücksetzen nach 5 Sekunden
+            setTimeout(() => {
+                alert.style.display = 'none';
+                document.getElementById('erp-form').reset();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -17,24 +17,32 @@ echo ""
 
 # 0. Sicherstellen, dass Docker Desktop läuft
 if ! docker info > /dev/null 2>&1; then
-  echo ">>> 0. Docker Desktop wird gestartet..."
-  open -a Docker
-  echo -n "   Warte auf Docker Daemon"
-  for i in $(seq 1 60); do
-    if docker info > /dev/null 2>&1; then
-      echo ""
-      echo "   [OK] Docker Desktop ist bereit."
-      break
+  echo ">>> 0. [FEHLER] Docker Desktop läuft nicht!"
+  echo "   Bitte starte Docker Desktop manuell und warte, bis es bereit ist,"
+  echo "   bevor du dieses Skript ausführst."
+  exit 1
+fi
+
+# 0.5. Prüfen auf verwaiste "Ghost-Container" (bekannter Docker Mac Bug)
+if docker info > /dev/null 2>&1; then
+  GHOSTS=""
+  for ID in $(docker ps -a -q); do
+    if ! docker inspect "$ID" >/dev/null 2>&1; then
+      GHOSTS="$GHOSTS $ID"
     fi
-    echo -n "."
-    sleep 2
   done
-  if ! docker info > /dev/null 2>&1; then
-    echo ""
-    echo "   [FEHLER] Docker Desktop konnte nicht gestartet werden!"
+  if [ -n "$GHOSTS" ]; then
+    echo ">>> 0.5. [WARNUNG] Verwaiste Ghost-Container in Docker erkannt: $GHOSTS"
+    echo "   [INFO] Versuche automatische Bereinigung der Docker-VM..."
+    RM_PATHS=""
+    for GID in $GHOSTS; do
+      RM_PATHS="$RM_PATHS /docker-root/containers/${GID}*"
+    done
+    docker run --rm -v /var/lib/docker:/docker-root alpine sh -c "rm -rf $RM_PATHS" >/dev/null 2>&1
+    echo "   [INFO] Bereinigung abgeschlossen. Bitte starte Docker Desktop neu,"
+    echo "          damit die Änderungen im Container-Index aktiv werden."
     exit 1
   fi
-  echo ""
 fi
 
 # 1. Start Docker
@@ -77,13 +85,13 @@ echo ""
 echo ">>> 4. Starte Backend-Dienste in neuen Terminal-Fenstern..."
 
 echo "   -> Starte gRPC Server..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== gRPC-Server ===' && python3 grpc-service/src/server.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== gRPC-Server ===' && exec python3 grpc-service/src/server.py\""
 
 echo "   -> Starte Worker..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== Worker ===' && python3 worker/src/worker.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== Worker ===' && exec python3 worker/src/worker.py\""
 
 echo "   -> Starte RabbitMQ Consumer..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== RabbitMQ Consumer ===' && python3 zahlungssystem/src/consumer.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== RabbitMQ Consumer ===' && exec python3 zahlungssystem/src/consumer.py\""
 
 echo ""
 echo "==========================================================="
@@ -91,6 +99,7 @@ echo "  [ERFOLG] Alle Systemkomponenten wurden gestartet!"
 echo "==========================================================="
 echo "  - Tasklist: http://localhost:8082  (Login: demo / demo)"
 echo "  - Operate:  http://localhost:8081  (Login: demo / demo)"
+echo "  - RabbitMQ: http://localhost:15672 (Login: admin / admin)"
 echo ""
 echo "  Du kannst jetzt eine neue E-Mail-Rechnung simulieren mit:"
 echo "  -> python3 auto_email_start.py"

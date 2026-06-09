@@ -1,7 +1,6 @@
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: dvg-rabbitmq
     hostname: dvg-rabbitmq          # stabiler Node-Name, sonst aendert er sich bei jedem Neustart
     ports:
       - "5672:5672"    # AMQP
@@ -22,7 +21,7 @@ services:
   # mit dem eingebauten Demo-User (demo/demo).
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
-    container_name: dvg-elasticsearch
+    stop_grace_period: 45s
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
@@ -39,7 +38,7 @@ services:
 
   zeebe:
     image: camunda/zeebe:8.6.0
-    container_name: dvg-zeebe
+    stop_grace_period: 45s
     ports:
       - "26500:26500"  # gRPC-Gateway für pyzeebe-Worker
       - "9600:9600"    # Health/Monitoring
@@ -48,13 +47,14 @@ services:
       - ZEEBE_BROKER_NETWORK_HOST=0.0.0.0
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+    volumes:
+      - zeebe-data:/usr/local/zeebe/data
     depends_on:
       elasticsearch:
         condition: service_healthy
 
   operate:
     image: camunda/operate:8.6.0
-    container_name: dvg-operate
     ports:
       - "8081:8080"   # http://localhost:8081 (demo/demo)
     environment:
@@ -67,7 +67,6 @@ services:
 
   tasklist:
     image: camunda/tasklist:8.6.0
-    container_name: dvg-tasklist
     ports:
       - "8082:8080"   # http://localhost:8082 (demo/demo)
     environment:
@@ -83,3 +82,4 @@ services:
 
 volumes:
   es-data:
+  zeebe-data:

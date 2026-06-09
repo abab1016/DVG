@@ -17,6 +17,7 @@ Zwei getrennte Verträge werden hier überbrückt:
 invoiceNumber und channel sind fachliche Prozessvariablen, haben aber kein
 Proto-Feld und werden daher NICHT an den gRPC-Service weitergegeben.
 """
+import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -28,9 +29,10 @@ EINGABE_PFLICHT = [
     "invoiceDate",
     "currency",
     "channel",
+    "billingAddress",
 ]
 
-# Ausgabe: exakt die 12 Felder aus invoice.proto (message Rechnungsmetadaten)
+# Ausgabe: exakt die 14 Felder aus invoice.proto (message Rechnungsmetadaten)
 PROTO_FELDER = [
     "invoiceId",
     "supplierId",
@@ -44,6 +46,8 @@ PROTO_FELDER = [
     "status",
     "fileName",
     "createdAt",
+    "billingAddress",
+    "items",
 ]
 
 
@@ -55,7 +59,7 @@ def variablen_zu_rechnung(variablen: Dict[str, Any]) -> Dict[str, Any]:
     """Konvertiert Zeebe-Prozessvariablen in ein Proto-konformes Rechnungs-Dict.
 
     Validiert die Pflicht-Eingaben (Scope 14.1) und liefert ein Dict, dessen
-    Schlüssel eine Teilmenge der 12 Proto-Felder sind, sodass
+    Schlüssel eine Teilmenge der 14 Proto-Felder sind, sodass
     invoice_pb2.Rechnungsmetadaten(**ergebnis) nicht fehlschlägt.
     """
     # 1. Eingabe-Pflichtfelder prüfen
@@ -71,6 +75,76 @@ def variablen_zu_rechnung(variablen: Dict[str, Any]) -> Dict[str, Any]:
 
     amount_gross = _zu_float(variablen["amountGross"], "amountGross")
 
+    # Positionen parsen
+    raw_items = variablen.get("invoiceItems", [])
+    items = []
+    import re
+    if isinstance(raw_items, str) and raw_items.strip():
+        if raw_items.strip().startswith("["):
+            try:
+                raw_items = json.loads(raw_items)
+            except Exception:
+                pass
+        
+        if isinstance(raw_items, str):
+            lines = raw_items.strip().split("\n")
+            parsed_list = []
+            for line in lines:
+                line = line.strip()
+                if line.startswith("-"):
+                    line = line[1:].strip()
+                if not line:
+                    continue
+                parts = line.split(":")
+                if len(parts) >= 2:
+                    desc = parts[0].strip()
+                    rest = parts[1].strip()
+                else:
+                    desc = line
+                    rest = ""
+                
+                qty = 1.0
+                price = 0.0
+                if rest:
+                    m = re.search(r"([\d,.]+)\s*x\s*([\d,.]+)", rest)
+                    if m:
+                        try:
+                            qty_val = m.group(1).replace(",", ".")
+                            price_val = m.group(2).replace(",", ".")
+                            qty = float(qty_val)
+                            price = float(price_val)
+                        except ValueError:
+                            pass
+                    else:
+                        try:
+                            price = float(rest.split("=")[0].replace(",", ".").strip())
+                        except ValueError:
+                            pass
+                
+                parsed_list.append({
+                    "description": desc,
+                    "quantity": qty,
+                    "unitPrice": price,
+                    "totalPrice": round(qty * price, 2)
+                })
+            raw_items = parsed_list
+
+    if isinstance(raw_items, list):
+        for item in raw_items:
+            if isinstance(item, dict):
+                desc = str(item.get("description", "")).strip()
+                qty = float(item.get("quantity", 0.0) or 0.0)
+                u_price = float(item.get("unitPrice", 0.0) or 0.0)
+                t_price = float(item.get("totalPrice", 0.0) or 0.0)
+                if not t_price and qty and u_price:
+                    t_price = round(qty * u_price, 2)
+                items.append({
+                    "description": desc,
+                    "quantity": qty,
+                    "unitPrice": u_price,
+                    "totalPrice": t_price,
+                })
+
     # 2. Proto-Dict aufbauen — NUR Proto-Feldnamen
     rechnung: Dict[str, Any] = {
         "invoiceId": str(variablen["invoiceId"]).strip(),
@@ -82,6 +156,8 @@ def variablen_zu_rechnung(variablen: Dict[str, Any]) -> Dict[str, Any]:
         "supplierId": _supplier_id_aus_name(str(variablen["supplierName"]).strip()),
         "status": "OPEN",
         "createdAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "billingAddress": str(variablen["billingAddress"]).strip(),
+        "items": items,
     }
 
     # optionale Proto-Felder aus Prozessvariablen

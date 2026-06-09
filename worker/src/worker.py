@@ -1,21 +1,27 @@
 """pyzeebe-Worker fuer den Sprint-4-Workflow.
 
 Verbindet sich mit Zeebe (Camunda 8) und abonniert alle Service-Task-Job-Types:
+  - extract-pdf-metadata     Rechnungs-PDF automatisch auslesen
   - save-invoice-metadata    gRPC-Metadaten speichern
   - send-payment-order       RabbitMQ-Zahlungsauftrag senden
   - archive-invoice          Prozessabschluss archivieren
+  - send-information-request Rueckfrage an Lieferanten "senden"
 """
 import asyncio
 import logging
 import os
+import json
+import threading
 from pathlib import Path
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from pyzeebe import ZeebeWorker, create_insecure_channel
+from pyzeebe import ZeebeWorker, ZeebeClient, create_insecure_channel
 
 from handlers.archive_handler import registriere_archive_handler
 from handlers.grpc_handler import registriere_grpc_handler
 from handlers.info_request_handler import registriere_info_request_handler
 from handlers.payment_handler import registriere_payment_handler
+from handlers.pdf_handler import registriere_pdf_handler
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
@@ -36,22 +42,154 @@ def _logging_konfigurieren() -> None:
     )
 
 
+# --- REST-API für Lieferanten-Simulation (Postman) ---------------------------
+
+class SupplierResponseHTTPServer(HTTPServer):
+    """Custom HTTP Server, der Zeebe-Client und Event-Loop hält."""
+    allow_reuse_address = True
+
+    def __init__(self, server_address, RequestHandlerClass, loop, client):
+        super().__init__(server_address, RequestHandlerClass)
+        self.loop = loop
+        self.client = client
+
+
+class SupplierResponseHandler(BaseHTTPRequestHandler):
+    """HTTP-Request-Handler für die Postman-Schnittstelle."""
+    
+    def log_message(self, format, *args):
+        # logging unterdrücken bzw. über Standard-Logger ausgeben
+        logger.info("[REST-Gateway] " + format % args)
+
+    def do_GET(self):
+        if self.path.startswith("/api/files/"):
+            file_name = self.path[len("/api/files/"):]
+            if "/" in file_name or "\\" in file_name or ".." in file_name:
+                self.send_response(400)
+                self.end_headers()
+                return
+            
+            pdf_path = _HIER.parent.parent / "Rechnungsdaten" / file_name
+            if not pdf_path.exists():
+                self.send_response(404)
+                self.end_headers()
+                return
+            
+            try:
+                with open(pdf_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/pdf")
+                self.send_header("Content-Disposition", f"inline; filename=\"{file_name}\"")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                logger.error("[REST-Gateway] Fehler beim Servieren der PDF-Datei: %s", e)
+            return
+        
+        self.send_response(404)
+        self.end_headers()
+
+    def do_POST(self):
+        if self.path != "/api/supplier/response":
+            self.send_response(404)
+            self.end_headers()
+            return
+        
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            data = json.loads(body.decode('utf-8'))
+        except Exception as e:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": f"Ungültiges JSON: {e}"}).encode('utf-8'))
+            return
+
+        invoice_id = data.get("invoiceId")
+        comment = data.get("comment", "")
+        
+        if not invoice_id:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": "Fehlendes Feld: invoiceId"}).encode('utf-8'))
+            return
+
+        invoice_id = str(invoice_id).strip()
+        comment = str(comment).strip()
+        logger.info("[REST-Gateway] Empfangen: Rückmeldung für Rechnung %s (Kommentar: %s)", invoice_id, comment)
+
+        # Message an Zeebe publizieren (Thread-safe über den Main Loop)
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                self.server.client.publish_message(
+                    name="Message_Antwort",
+                    correlation_key=invoice_id,
+                    variables={"infoResponseComment": comment}
+                ),
+                self.server.loop
+            )
+            # Auf Ergebnis warten mit Timeout (10s)
+            future.result(timeout=10)
+        except Exception as e:
+            logger.error("[REST-Gateway] Fehler beim Publizieren der Zeebe-Nachricht: %s", e)
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": f"Zeebe-Verbindung fehlgeschlagen: {e}"}).encode('utf-8'))
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({
+            "success": True,
+            "message": f"Nachricht 'Message_Antwort' für Rechnung {invoice_id} erfolgreich korreliert."
+        }).encode('utf-8'))
+
+
+def _starte_http_server(loop, client) -> HTTPServer:
+    """Startet den HTTP-Server in einem Hintergrund-Thread."""
+    server_address = ("", 8090)
+    httpd = SupplierResponseHTTPServer(server_address, SupplierResponseHandler, loop, client)
+    
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    
+    logger.info("[REST-Gateway] Lieferanten-Simulator auf Port 8090 gestartet.")
+    return httpd
+
+
+# --- Worker Hauptprogramm ---------------------------------------------------
+
 async def main() -> None:
     _logging_konfigurieren()
     logger.info("Starte Worker, verbinde mit Zeebe: %s", ZEEBE_ADRESSE)
 
     kanal = create_insecure_channel(grpc_address=ZEEBE_ADRESSE)
     worker = ZeebeWorker(kanal)
+    client = ZeebeClient(kanal)
 
+    # Registriere alle Job-Handler
+    registriere_pdf_handler(worker)
     registriere_grpc_handler(worker)
     registriere_payment_handler(worker)
     registriere_archive_handler(worker)
     registriere_info_request_handler(worker)
 
+    # Startet das REST-Gateway für Postman
+    loop = asyncio.get_running_loop()
+    _starte_http_server(loop, client)
+
     logger.info(
         "Worker bereit, abonniere Job-Types: "
-        "save-invoice-metadata, send-payment-order, archive-invoice, "
-        "send-information-request"
+        "extract-pdf-metadata, save-invoice-metadata, send-payment-order, "
+        "archive-invoice, send-information-request"
     )
     await worker.work()
 

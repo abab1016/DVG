@@ -59,6 +59,12 @@ def variablen_zu_zahlungsauftrag(variablen: Dict[str, Any]) -> Dict[str, Any]:
         rechnung[feld] = str(val).strip() if not _ist_leer(val) else ""
     rechnung[FELD_AMOUNT] = amount
 
+    # billingAddress und items durchreichen
+    if "billingAddress" in variablen and not _ist_leer(variablen["billingAddress"]):
+        rechnung["billingAddress"] = str(variablen["billingAddress"]).strip()
+    if "invoiceItems" in variablen and variablen["invoiceItems"]:
+        rechnung["items"] = variablen["invoiceItems"]
+
     return rechnung
 
 

@@ -14,6 +14,16 @@
       "id": "Field_Header"
     },
     {
+      "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
+      "type": "text",
+      "id": "Field_pdfLink"
+    },
+    {
+      "text": "**Rechnungsdaten zur Prüfung:**",
+      "type": "text",
+      "id": "Field_SubHeader"
+    },
+    {
       "label": "Rechnungs-ID",
       "type": "textfield",
       "layout": {
@@ -25,10 +35,21 @@
       "disabled": true
     },
     {
-      "label": "Lieferant",
+      "label": "Rechnungsnummer",
       "type": "textfield",
       "layout": {
         "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "disabled": true
+    },
+    {
+      "label": "Lieferantenname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
         "columns": 6
       },
       "id": "Field_supplierName",
@@ -36,10 +57,54 @@
       "disabled": true
     },
     {
+      "label": "Lieferanten-E-Mail",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierEmail",
+      "key": "supplierEmail",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_invoiceDate",
+      "key": "invoiceDate",
+      "disabled": true
+    },
+    {
+      "label": "Fälligkeitsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_dueDate",
+      "key": "dueDate",
+      "disabled": true
+    },
+    {
+      "label": "Nettobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountNet",
+      "key": "amountNet",
+      "disabled": true
+    },
+    {
       "label": "Bruttobetrag",
       "type": "number",
       "layout": {
-        "row": "Row_2",
+        "row": "Row_4",
         "columns": 4
       },
       "id": "Field_amountGross",
@@ -50,7 +115,7 @@
       "label": "Währung",
       "type": "textfield",
       "layout": {
-        "row": "Row_2",
+        "row": "Row_4",
         "columns": 4
       },
       "id": "Field_currency",
@@ -61,18 +126,59 @@
       "label": "IBAN",
       "type": "textfield",
       "layout": {
-        "row": "Row_2",
-        "columns": 4
+        "row": "Row_5"
       },
       "id": "Field_iban",
       "key": "iban",
       "disabled": true
     },
     {
+      "label": "Dateiname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_fileName",
+      "key": "fileName",
+      "disabled": true
+    },
+    {
+      "label": "Eingangskanal",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_channel",
+      "key": "channel",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsadresse",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_7"
+      },
+      "id": "Field_billingAddress",
+      "key": "billingAddress",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungspositionen",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "key": "invoiceItems",
+      "disabled": true
+    },
+    {
       "label": "Fehlermeldung",
       "type": "textfield",
       "layout": {
-        "row": "Row_3"
+        "row": "Row_Error"
       },
       "id": "Field_errorMessage",
       "key": "errorMessage",
@@ -87,7 +193,7 @@
       "label": "Zahlung manuell veranlasst *",
       "type": "checkbox",
       "layout": {
-        "row": "Row_5"
+        "row": "Row_Confirm"
       },
       "id": "Field_paymentRequested",
       "key": "paymentRequested",
@@ -100,7 +206,7 @@
       "label": "Kommentar zur manuellen Zahlung",
       "type": "textarea",
       "layout": {
-        "row": "Row_6"
+        "row": "Row_Comment"
       },
       "id": "Field_manualPaymentComment",
       "key": "manualPaymentComment"

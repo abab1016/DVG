@@ -14,6 +14,11 @@
       "id": "Field_Header"
     },
     {
+      "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
+      "type": "text",
+      "id": "Field_pdfLink"
+    },
+    {
       "label": "Rechnungs-ID *",
       "type": "textfield",
       "layout": {
@@ -163,6 +168,28 @@
         "required": true
       },
       "valuesExpression": "=[{\"label\": \"E-Mail\", \"value\": \"EMAIL\"}, {\"label\": \"EDI\", \"value\": \"EDI\"}]"
+    },
+    {
+      "label": "Rechnungsadresse *",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_7"
+      },
+      "id": "Field_billingAddress",
+      "key": "billingAddress",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Rechnungspositionen",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "key": "invoiceItems",
+      "description": "Positionen (Format: - Beschreibung: Menge x Preis)"
     }
   ],
   "type": "default"

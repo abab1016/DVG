@@ -277,7 +277,7 @@
   </bpmn:process>
   <bpmn:error id="Error_gRPC_ID" name="gRPC Error" errorCode="ERR_GRPC" />
   <bpmn:error id="Error_RabbitMQ_ID" name="RabbitMQ Error" errorCode="ERR_RABBITMQ" />
-  <bpmn:message id="Message_InvoiceReceived" name="Message_InvoiceReceived" />
+  <bpmn:message id="Message_InvoiceReceived" name="Message_InvoiceReceived_Sprint4" />
   <bpmn:message id="Message_Antwort" name="Message_Antwort">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=invoiceId" />

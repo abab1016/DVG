@@ -8,6 +8,7 @@ service RechnungsService {
   rpc HoleRechnungsmetadaten      (RechnungsAnfrage)   returns (Rechnungsmetadaten);
 }
 
+// Datenfelder einer Rechnung DTO
 message Rechnungsmetadaten {
   string invoiceId     = 1;
   string supplierId    = 2;
@@ -23,12 +24,14 @@ message Rechnungsmetadaten {
   string createdAt     = 12;
 }
 
+// Antwort vom Server DTO
 message SpeicherAntwort {
-  string invoiceId = 1;   // bestätigte Rechnungs-ID
+  string invoiceId = 1;
   bool   success   = 2;
   string message   = 3;
 }
 
+// Anfrage vom Client
 message RechnungsAnfrage {
   string invoiceId = 1;
 }

@@ -3,6 +3,9 @@
 # NO CHECKED-IN PROTOBUF GENCODE
 # source: invoice.proto
 # Protobuf Python Version: 6.31.1
+
+# macht aus deiner .proto Datei echte Python-Datenstrukturen und Metadaten für gRPC.
+
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool

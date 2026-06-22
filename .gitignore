@@ -12,7 +12,6 @@ venv/
 env/
 
 # Laufzeitdaten
-Rechnungsdaten/
 
 # IDE
 .vscode/

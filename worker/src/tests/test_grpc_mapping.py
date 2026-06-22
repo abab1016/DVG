@@ -16,11 +16,15 @@ def vollstaendige_variablen() -> dict:
         "amountGross": 595.00,
         "currency": "EUR",
         "channel": "EMAIL",
+        "billingAddress": "Musterweg 1, 12345 Musterstadt",
         # optional
         "fileName": "rechnung_april.pdf",
         "dueDate": "2026-05-10",
         "iban": "DE12345678901234567890",
         "amountNet": 500.00,
+        "invoiceItems": [
+            {"description": "Item A", "quantity": 2.0, "unitPrice": 10.0, "totalPrice": 20.0}
+        ]
     }
 
 
@@ -28,6 +32,9 @@ def test_happy_path_liefert_proto_felder():
     rechnung = variablen_zu_rechnung(vollstaendige_variablen())
     assert rechnung["invoiceId"] == "INV-2026-099"
     assert rechnung["amountGross"] == 595.00
+    assert rechnung["billingAddress"] == "Musterweg 1, 12345 Musterstadt"
+    assert len(rechnung["items"]) == 1
+    assert rechnung["items"][0]["description"] == "Item A"
 
 
 def test_ausgabe_enthaelt_nur_proto_feldnamen():

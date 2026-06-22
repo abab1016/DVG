@@ -1,0 +1,42 @@
+{
+	"info": {
+		"_postman_id": "c1f7b7a2-f8ab-40a2-91d1-123456789abc",
+		"name": "DVG Lieferanten-Rückfrage Simulation",
+		"description": "Simulation der Lieferantenrückmeldung für den Camunda 8 Workflow des DVG Prototyps.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Rückmeldung senden (Simuliere Lieferant)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"invoiceId\": \"INV-2026-101\",\n    \"comment\": \"Lieferanten-Rückmeldung: Dokumente sind korrekt und freigegeben.\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8090/api/supplier/response",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"api",
+						"supplier",
+						"response"
+					]
+				},
+				"description": "Sendet eine Nachricht an den Python-Worker, um das message event 'Message_Antwort' mit dem passenden Korrelationsschlüssel (invoiceId) in Camunda auszulösen. Der Workflow läuft danach automatisch weiter."
+			},
+			"response": []
+		}
+	]
+}

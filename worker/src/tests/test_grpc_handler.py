@@ -20,6 +20,7 @@ def vollstaendige_variablen() -> dict:
         "amountGross": 595.00,
         "currency": "EUR",
         "channel": "EMAIL",
+        "billingAddress": "Musterweg 1, 12345 Musterstadt",
         "fileName": "rechnung.pdf",
         "dueDate": "2026-05-10",
         "iban": "DE12345678901234567890",

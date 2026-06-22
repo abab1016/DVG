@@ -1,0 +1,226 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_RechnungsPruefung",
+  "components": [
+    {
+      "text": "### Rechnungsprüfung & Freigabe\nBitte prüfen Sie die Rechnungsdaten und treffen Sie eine Entscheidung.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
+      "type": "text",
+      "id": "Field_pdfLink"
+    },
+    {
+      "text": "**Rechnungsdaten zur Prüfung:**",
+      "type": "text",
+      "id": "Field_SubHeader"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsnummer",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "disabled": true
+    },
+    {
+      "label": "Lieferantenname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Lieferanten-E-Mail",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierEmail",
+      "key": "supplierEmail",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_invoiceDate",
+      "key": "invoiceDate",
+      "disabled": true
+    },
+    {
+      "label": "Fälligkeitsdatum",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_3",
+        "columns": 6
+      },
+      "id": "Field_dueDate",
+      "key": "dueDate",
+      "disabled": true
+    },
+    {
+      "label": "Nettobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountNet",
+      "key": "amountNet",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Währung",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_4",
+        "columns": 4
+      },
+      "id": "Field_currency",
+      "key": "currency",
+      "disabled": true
+    },
+    {
+      "label": "IBAN",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_5"
+      },
+      "id": "Field_iban",
+      "key": "iban",
+      "disabled": true
+    },
+    {
+      "label": "Dateiname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_fileName",
+      "key": "fileName",
+      "disabled": true
+    },
+    {
+      "label": "Eingangskanal",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_6",
+        "columns": 6
+      },
+      "id": "Field_channel",
+      "key": "channel",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsadresse",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_7"
+      },
+      "id": "Field_billingAddress",
+      "key": "billingAddress",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungspositionen",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "key": "invoiceItems",
+      "disabled": true
+    },
+    {
+      "text": "---\n**Entscheidung:**",
+      "type": "text",
+      "id": "Field_Separator"
+    },
+    {
+      "label": "Freigabeentscheidung *",
+      "type": "select",
+      "layout": {
+        "row": "Row_Decision"
+      },
+      "id": "Field_approvalDecision",
+      "key": "approvalDecision",
+      "validate": {
+        "required": true
+      },
+      "valuesExpression": "=[{\"label\": \"✅ Freigegeben (APPROVED)\", \"value\": \"APPROVED\"}, {\"label\": \"❌ Abgelehnt (REJECTED)\", \"value\": \"REJECTED\"}, {\"label\": \"❓ Rückfrage nötig (INFO_REQUIRED)\", \"value\": \"INFO_REQUIRED\"}]"
+    },
+    {
+      "label": "Compliance Check anfordern?",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_Compliance"
+      },
+      "id": "Field_complianceRequired",
+      "key": "complianceRequired",
+      "description": "Manuell eine zusätzliche Compliance-Prüfung anfordern"
+    },
+    {
+      "label": "UiPath-Bot-Fehler simulieren (ERP-Erfassung)?",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_SimulateError"
+      },
+      "id": "Field_simulateUiPathError",
+      "key": "simulateUiPathError",
+      "description": "Aktivieren, um einen Fehler des UiPath-Bots bei der ERP-Buchung zu simulieren und den manuellen Fallback zu testen"
+    },
+    {
+      "label": "Begründung / Kommentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_Comment"
+      },
+      "id": "Field_approvalComment",
+      "key": "approvalComment"
+    }
+  ],
+  "type": "default"
+}

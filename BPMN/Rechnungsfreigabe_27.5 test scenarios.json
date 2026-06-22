@@ -1,0 +1,353 @@
+{
+  "processId": "Process_Rechnungsfreigabe",
+  "testCases": [
+    {
+      "name": "RabbitMQ Error und hoher Betrag",
+      "instructions": [
+        {
+          "type": "CREATE_PROCESS_INSTANCE",
+          "processDefinitionSelector": {
+            "processDefinitionId": "Process_Rechnungsfreigabe"
+          },
+          "variables": {
+            "invoiceId": "INV-2026-001",
+            "invoiceNumber": "RE-2026-7781",
+            "supplierName": "nick",
+            "supplierEmail": "nick@nick.de",
+            "invoiceDate": "2026-06-01",
+            "dueDate": "2026-06-02",
+            "amountNet": 100000,
+            "amountGross": 120000,
+            "currency": "EUR",
+            "iban": "DE12456789900987654",
+            "fileName": "rechnung.pdf"
+          }
+        },
+        {
+          "type": "COMPLETE_JOB",
+          "jobSelector": {
+            "elementId": "Task_MetadatenSpeichern",
+            "jobType": "save-invoice-metadata"
+          }
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_RechnungPruefen"
+          },
+          "variables": {
+            "approvalDecision": "APPROVED",
+            "complianceRequired": true,
+            "approvalComment": "suspekt "
+          }
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_ComplianceCheck"
+          },
+          "variables": {
+            "complianceDecision": "PASSED",
+            "complianceComment": ""
+          }
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_ERPErfassung"
+          },
+          "variables": {
+            "erpEntered": true,
+            "erpComment": ""
+          }
+        },
+        {
+          "type": "THROW_BPMN_ERROR_FROM_JOB",
+          "jobSelector": {
+            "elementId": "Task_ZahlungVeranlassen",
+            "jobType": "send-payment-order"
+          },
+          "errorCode": "ERR_RABBITMQ"
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_ManuelleZahlung"
+          },
+          "variables": {
+            "paymentRequested": true,
+            "manualPaymentComment": ""
+          }
+        },
+        {
+          "type": "COMPLETE_JOB",
+          "jobSelector": {
+            "elementId": "Task_Archivieren",
+            "jobType": "archive-invoice"
+          }
+        },
+        {
+          "type": "ASSERT_PROCESS_INSTANCE",
+          "processInstanceSelector": {
+            "processDefinitionId": "Process_Rechnungsfreigabe"
+          },
+          "state": "IS_COMPLETED"
+        }
+      ],
+      "metadata": {
+        "processInstanceId": 6755399503457416,
+        "coveredFlowNodes": [
+          {
+            "flowNodeId": "StartEvent_Portal",
+            "elementType": "bpmn:StartEvent"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforegRPC",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_MetadatenSpeichern",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "Gateway_MergeAfterGRPC",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforeReview",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_RechnungPruefen",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Gateway_Freigabeentscheidung",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_ComplianceRules",
+            "elementType": "bpmn:BusinessRuleTask"
+          },
+          {
+            "flowNodeId": "Gateway_ComplianceErforderlich",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_ComplianceCheck",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Gateway_ComplianceBestanden",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforeERP",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_ERPErfassung",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Task_ZahlungVeranlassen",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "Boundary_Error_RabbitMQ",
+            "elementType": "bpmn:BoundaryEvent"
+          },
+          {
+            "flowNodeId": "Task_ManuelleZahlung",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Gateway_MergeAfterPayment",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_Archivieren",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "EndEvent_Abgeschlossen",
+            "elementType": "bpmn:EndEvent"
+          }
+        ],
+        "coveredSequenceFlows": [
+          "Flow_ReviewToGateway",
+          "Flow_Approved",
+          "Flow_ComplianceRulesToGateway",
+          "Flow_ComplianceYes",
+          "Flow_ComplianceCheckToGateway",
+          "Flow_CompliancePassed",
+          "Flow_ERPStart",
+          "Flow_GRPCToMerge",
+          "Flow_MergeToReview",
+          "Flow_MergeToReviewTask",
+          "Flow_PortalToMergegRPC",
+          "Flow_ToGRPC",
+          "Flow_PaymentErrorToFallback",
+          "Flow_ERPToPayment",
+          "Flow_FallbackPaymentToMerge",
+          "Flow_PaymentToArchiv",
+          "Flow_ArchivToEnd"
+        ]
+      }
+    },
+    {
+      "name": "123szenario",
+      "instructions": [
+        {
+          "type": "CREATE_PROCESS_INSTANCE",
+          "processDefinitionSelector": {
+            "processDefinitionId": "Process_Rechnungsfreigabe"
+          },
+          "variables": {
+            "invoiceId": "INV-2026-001",
+            "invoiceNumber": "RE-2026-7781",
+            "supplierName": "nick",
+            "supplierEmail": "nick@nick.de",
+            "invoiceDate": "2026-06-01",
+            "dueDate": "2026-06-02",
+            "amountNet": 1000,
+            "amountGross": 1200,
+            "currency": "EUR",
+            "iban": "DE12456789900987654",
+            "fileName": "rechnung.pdf"
+          }
+        },
+        {
+          "type": "COMPLETE_JOB",
+          "jobSelector": {
+            "elementId": "Task_MetadatenSpeichern",
+            "jobType": "save-invoice-metadata"
+          }
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_RechnungPruefen"
+          },
+          "variables": {
+            "approvalDecision": "APPROVED",
+            "complianceRequired": false,
+            "approvalComment": "suspekt "
+          }
+        },
+        {
+          "type": "COMPLETE_USER_TASK",
+          "userTaskSelector": {
+            "elementId": "Task_ERPErfassung"
+          },
+          "variables": {
+            "erpEntered": true,
+            "erpComment": ""
+          }
+        },
+        {
+          "type": "COMPLETE_JOB",
+          "jobSelector": {
+            "elementId": "Task_ZahlungVeranlassen",
+            "jobType": "send-payment-order"
+          }
+        },
+        {
+          "type": "COMPLETE_JOB",
+          "jobSelector": {
+            "elementId": "Task_Archivieren",
+            "jobType": "archive-invoice"
+          }
+        },
+        {
+          "type": "ASSERT_PROCESS_INSTANCE",
+          "processInstanceSelector": {
+            "processDefinitionId": "Process_Rechnungsfreigabe"
+          },
+          "state": "IS_COMPLETED"
+        }
+      ],
+      "metadata": {
+        "processInstanceId": 2251799872575298,
+        "coveredFlowNodes": [
+          {
+            "flowNodeId": "StartEvent_Portal",
+            "elementType": "bpmn:StartEvent"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforegRPC",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_MetadatenSpeichern",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "Gateway_MergeAfterGRPC",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforeReview",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_RechnungPruefen",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Gateway_Freigabeentscheidung",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_ComplianceRules",
+            "elementType": "bpmn:BusinessRuleTask"
+          },
+          {
+            "flowNodeId": "Gateway_ComplianceErforderlich",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Gateway_MergeBeforeERP",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_ERPErfassung",
+            "elementType": "bpmn:UserTask"
+          },
+          {
+            "flowNodeId": "Task_ZahlungVeranlassen",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "Gateway_MergeAfterPayment",
+            "elementType": "bpmn:ExclusiveGateway"
+          },
+          {
+            "flowNodeId": "Task_Archivieren",
+            "elementType": "bpmn:ServiceTask"
+          },
+          {
+            "flowNodeId": "EndEvent_Abgeschlossen",
+            "elementType": "bpmn:EndEvent"
+          }
+        ],
+        "coveredSequenceFlows": [
+          "Flow_ReviewToGateway",
+          "Flow_Approved",
+          "Flow_ComplianceRulesToGateway",
+          "Flow_ComplianceNo",
+          "Flow_ERPStart",
+          "Flow_GRPCToMerge",
+          "Flow_MergeToReview",
+          "Flow_MergeToReviewTask",
+          "Flow_PortalToMergegRPC",
+          "Flow_ToGRPC",
+          "Flow_ERPToPayment",
+          "Flow_PaymentToMerge",
+          "Flow_PaymentToArchiv",
+          "Flow_ArchivToEnd"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "8f280d7b-2a6d-48e3-8c89-9dd5fdbea10d",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "fileName": null,
+      "fileReference": null,
+      "name": "DVG_Sprint5_ERP_Rechnungserfassung_Bot",
+      "description": null
+    },
+    "locks": [],
+    "key": "23929880-6523-42ef-b908-bb6175722ba0"
+  }
+}

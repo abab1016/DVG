@@ -22,6 +22,15 @@ message Rechnungsmetadaten {
   string status        = 10;
   string fileName      = 11;
   string createdAt     = 12;
+  string billingAddress = 13;
+  repeated InvoiceItem items = 14;
+}
+
+message InvoiceItem {
+  string description = 1;
+  double quantity    = 2;
+  double unitPrice   = 3;
+  double totalPrice  = 4;
 }
 
 // Antwort vom Server DTO

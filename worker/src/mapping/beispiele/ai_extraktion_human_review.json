@@ -1,0 +1,30 @@
+{
+  "invoiceId": "INV-2026-102",
+  "invoiceNumber": "RE-2026-102",
+  "supplierName": "Beispiel AG",
+  "invoiceDate": "2026-06-12",
+  "dueDate": "2026-07-12",
+  "amountGross": 845.00,
+  "currency": "EUR",
+  "iban": "",
+  "billingAddress": "Beispielstrasse 9, 76131 Karlsruhe",
+  "invoiceItems": [
+    {
+      "description": "Wartungsvertrag Q2",
+      "quantity": 1,
+      "unitPrice": 845.0,
+      "totalPrice": 845.0
+    }
+  ],
+  "confidence": {
+    "invoiceId": 0.91,
+    "invoiceNumber": 0.62,
+    "supplierName": 0.88,
+    "invoiceDate": 0.90,
+    "amountGross": 0.70,
+    "currency": 0.95,
+    "billingAddress": 0.85
+  },
+  "sourceFile": "rechnung_beispiel_ag_scan.pdf",
+  "extractionEngine": "n8n+gemini-1.5"
+}

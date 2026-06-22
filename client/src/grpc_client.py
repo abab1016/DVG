@@ -17,7 +17,15 @@ def speichere_rechnung(rechnung: dict) -> str:
 
     kanal = grpc.insecure_channel(GRPC_ADRESSE)
     stub = invoice_pb2_grpc.RechnungsServiceStub(kanal)
+    items = rechnung.pop("items", [])
     anfrage = invoice_pb2.Rechnungsmetadaten(**rechnung)
+    for item in items:
+        anfrage.items.add(
+            description=item.get("description", ""),
+            quantity=float(item.get("quantity", 0.0)),
+            unitPrice=float(item.get("unitPrice", 0.0)),
+            totalPrice=float(item.get("totalPrice", 0.0))
+        )
 
     try:
         antwort = stub.SpeichereRechnungsmetadaten(anfrage, timeout=ZEITLIMIT_SEK)

@@ -30,7 +30,9 @@ TESTRECHNUNG = invoice_pb2.Rechnungsmetadaten(
     status="OPEN",
     fileName="test.pdf",
     createdAt="2026-01-01T00:00:00Z",
+    billingAddress="Test Street 1, 12345 City",
 )
+TESTRECHNUNG.items.add(description="Consulting", quantity=2.0, unitPrice=50.0, totalPrice=100.0)
 
 
 def test_rechnung_speichern_erfolgreich(tmp_path, monkeypatch):
@@ -57,6 +59,9 @@ def test_rechnung_speichern_erstellt_datei(tmp_path, monkeypatch):
     assert daten["invoiceId"] == "INV-TEST-001"
     assert daten["supplierName"] == "Test GmbH"
     assert daten["amountGross"] == 119.0
+    assert daten["billingAddress"] == "Test Street 1, 12345 City"
+    assert len(daten["items"]) == 1
+    assert daten["items"][0]["description"] == "Consulting"
 
 
 def test_rechnung_speichern_leere_id(tmp_path, monkeypatch):
@@ -64,7 +69,7 @@ def test_rechnung_speichern_leere_id(tmp_path, monkeypatch):
     dienst = RechnungsService()
     kontext = ScheinKontext()
 
-    dienst.SpeichereRechnungsmetadaten(invoice_pb2.Rechnungsmetadaten(invoiceId=""), kontext)
+    dienst.SpeichereRechnungsmetadaten(invoice_pb2.Rechnungsmetadaten(invoiceId="", billingAddress="Straße"), kontext)
 
     assert kontext.statuscode == grpc.StatusCode.INVALID_ARGUMENT
 
@@ -74,9 +79,40 @@ def test_rechnung_speichern_leerzeichen_id(tmp_path, monkeypatch):
     dienst = RechnungsService()
     kontext = ScheinKontext()
 
-    dienst.SpeichereRechnungsmetadaten(invoice_pb2.Rechnungsmetadaten(invoiceId="   "), kontext)
+    dienst.SpeichereRechnungsmetadaten(invoice_pb2.Rechnungsmetadaten(invoiceId="   ", billingAddress="Straße"), kontext)
 
     assert kontext.statuscode == grpc.StatusCode.INVALID_ARGUMENT
+
+
+def test_rechnung_speichern_leere_adresse(tmp_path, monkeypatch):
+    monkeypatch.setattr("server.SPEICHER", tmp_path)
+    dienst = RechnungsService()
+    kontext = ScheinKontext()
+
+    rechnung = invoice_pb2.Rechnungsmetadaten(invoiceId="INV-001", billingAddress="")
+    dienst.SpeichereRechnungsmetadaten(rechnung, kontext)
+
+    assert kontext.statuscode == grpc.StatusCode.INVALID_ARGUMENT
+    assert "Rechnungsadresse" in kontext.meldung
+
+
+def test_rechnung_speichern_doppelte_adresse(tmp_path, monkeypatch):
+    monkeypatch.setattr("server.SPEICHER", tmp_path)
+    dienst = RechnungsService()
+
+    # Erste speichern
+    dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, ScheinKontext())
+
+    # Zweite speichern mit gleicher Adresse, aber anderer ID
+    rechnung2 = invoice_pb2.Rechnungsmetadaten(
+        invoiceId="INV-TEST-002",
+        billingAddress="Test Street 1, 12345 City",
+    )
+    kontext = ScheinKontext()
+    dienst.SpeichereRechnungsmetadaten(rechnung2, kontext)
+
+    assert kontext.statuscode == grpc.StatusCode.ALREADY_EXISTS
+    assert "doppelt" in kontext.meldung
 
 
 def test_rechnung_speichern_doppelte_id(tmp_path, monkeypatch):
@@ -85,8 +121,13 @@ def test_rechnung_speichern_doppelte_id(tmp_path, monkeypatch):
 
     dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, ScheinKontext())
 
+    # Zweite speichern mit gleicher ID, aber anderer Adresse (sollte am ID-Check scheitern)
+    rechnung2 = invoice_pb2.Rechnungsmetadaten(
+        invoiceId="INV-TEST-001",
+        billingAddress="Other Street 2",
+    )
     kontext = ScheinKontext()
-    dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, kontext)
+    dienst.SpeichereRechnungsmetadaten(rechnung2, kontext)
 
     assert kontext.statuscode == grpc.StatusCode.ALREADY_EXISTS
 
@@ -103,6 +144,9 @@ def test_rechnung_abrufen_gefunden(tmp_path, monkeypatch):
     assert ergebnis.invoiceId == "INV-TEST-001"
     assert ergebnis.supplierName == "Test GmbH"
     assert ergebnis.currency == "EUR"
+    assert ergebnis.billingAddress == "Test Street 1, 12345 City"
+    assert len(ergebnis.items) == 1
+    assert ergebnis.items[0].description == "Consulting"
 
 
 def test_rechnung_abrufen_nicht_gefunden(tmp_path, monkeypatch):

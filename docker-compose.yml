@@ -80,6 +80,25 @@ services:
       - zeebe
       - elasticsearch
 
+  # --- n8n AI Workflow Engine (Sprint 6) ---------------------------------
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Europe/Berlin
+      - N8N_RESTRICT_FILE_ACCESS_TO=/data
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./Rechnungsdaten:/data
+
 volumes:
   es-data:
   zeebe-data:
+  n8n-data:

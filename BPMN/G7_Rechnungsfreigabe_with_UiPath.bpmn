@@ -300,7 +300,7 @@
   <bpmn:error id="Error_gRPC_ID" name="gRPC Error" errorCode="ERR_GRPC" />
   <bpmn:error id="Error_RabbitMQ_ID" name="RabbitMQ Error" errorCode="ERR_RABBITMQ" />
   <bpmn:error id="Error_UiPath_ID" name="UiPath Error" errorCode="ERR_UIPATH_FAILED" />
-  <bpmn:message id="Message_InvoiceReceived" name="Message_InvoiceReceived" />
+  <bpmn:message id="Message_InvoiceReceived" name="Message_InvoiceReceived_UiPath" />
   <bpmn:message id="Message_Antwort" name="Message_Antwort">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=invoiceId" />

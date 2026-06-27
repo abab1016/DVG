@@ -1,0 +1,24 @@
+{
+  "invoiceId": "INV-2026-140",
+  "invoiceNumber": "RE-2026-140",
+  "supplierName": "DVG Lieferant GmbH",
+  "invoiceDate": "2026-06-20",
+  "dueDate": "2026-07-20",
+  "amountGross": 595.00,
+  "amountNet": 500.00,
+  "currency": "EUR",
+  "iban": "DE89370400440532013000",
+  "billingAddress": "Hauptstrasse 12, 12345 Berlin",
+  "confidence": {
+    "invoiceId": 0.95,
+    "invoiceNumber": 0.98,
+    "supplierName": 0.99,
+    "invoiceDate": 0.97,
+    "amountGross": 0.95,
+    "currency": 0.99,
+    "iban": 0.96,
+    "billingAddress": 0.92
+  },
+  "sourceFile": "INV-2026-140.pdf",
+  "extractionEngine": "n8n+gemini-1.5"
+}

@@ -64,7 +64,11 @@ async def handle_archivieren(**variablen: Any) -> Dict[str, Any]:
     except OSError as fehler:
         logger.error("[%s] Dateisystem-Fehler fuer %s: %s",
                      JOB_TYPE_ARCHIVIEREN, invoice_id, fehler)
-        raise
+        raise BusinessError(ERROR_CODE_ARCHIVE, f"Dateisystem-Fehler: {str(fehler)}")
+    except Exception as fehler:
+        logger.error("[%s] Unerwarteter Fehler fuer %s: %s",
+                     JOB_TYPE_ARCHIVIEREN, invoice_id, fehler)
+        raise BusinessError(ERROR_CODE_ARCHIVE, f"Unerwarteter Fehler bei Archivierung: {str(fehler)}")
 
     logger.info("[%s] Abschluss archiviert: %s", JOB_TYPE_ARCHIVIEREN, datei_pfad)
     return {"archiveStatus": "DONE"}

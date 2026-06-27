@@ -1,0 +1,96 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ManuelleArchivierung",
+  "components": [
+    {
+      "text": "### Manuelle Archivierung\nDie automatische Archivierung ist fehlgeschlagen. Bitte bestätigen Sie die manuelle Archivierung der folgenden Rechnung.",
+      "type": "text",
+      "id": "Field_Header"
+    },
+    {
+      "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
+      "type": "text",
+      "id": "Field_pdfLink"
+    },
+    {
+      "text": "### \u26a0\ufe0f Fehlerdetails\n**Fehlermeldung:** {{errorMessage}}",
+      "type": "text",
+      "id": "Field_ErrorInfo"
+    },
+    {
+      "label": "Rechnungs-ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceId",
+      "key": "invoiceId",
+      "disabled": true
+    },
+    {
+      "label": "Rechnungsnummer",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1",
+        "columns": 6
+      },
+      "id": "Field_invoiceNumber",
+      "key": "invoiceNumber",
+      "disabled": true
+    },
+    {
+      "label": "Lieferantenname",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_supplierName",
+      "key": "supplierName",
+      "disabled": true
+    },
+    {
+      "label": "Bruttobetrag",
+      "type": "number",
+      "layout": {
+        "row": "Row_2",
+        "columns": 6
+      },
+      "id": "Field_amountGross",
+      "key": "amountGross",
+      "disabled": true
+    },
+    {
+      "label": "Archivierungsstatus",
+      "type": "select",
+      "layout": {
+        "row": "Row_3"
+      },
+      "id": "Field_archiveStatus",
+      "key": "archiveStatus",
+      "defaultValue": "DONE",
+      "validate": {
+        "required": true
+      },
+      "valuesExpression": "=[{\"label\": \"\u2705 Manuell archiviert\", \"value\": \"DONE\"}, {\"label\": \"\u274c Archivierung fehlgeschlagen\", \"value\": \"ERROR\"}]"
+    },
+    {
+      "label": "Kommentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_4"
+      },
+      "id": "Field_archiveComment",
+      "key": "archiveComment",
+      "description": "Optional: Notizen zur manuellen Archivierung"
+    }
+  ],
+  "type": "default"
+}

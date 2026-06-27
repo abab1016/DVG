@@ -182,13 +182,63 @@
     },
     {
       "label": "Rechnungspositionen",
-      "type": "textarea",
+      "type": "dynamiclist",
       "layout": {
         "row": "Row_8"
       },
       "id": "Field_invoiceItems",
-      "key": "invoiceItems",
-      "description": "Positionen (Format: - Beschreibung: Menge x Preis)"
+      "isReorderable": true,
+      "allowAdd": true,
+      "allowRemove": true,
+      "components": [
+        {
+          "label": "Beschreibung",
+          "type": "textfield",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 6
+          },
+          "id": "Field_Item_Description",
+          "key": "description",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "label": "Menge",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_Quantity",
+          "key": "quantity",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "label": "Einzelpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_UnitPrice",
+          "key": "unitPrice"
+        },
+        {
+          "label": "Gesamtpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_TotalPrice",
+          "key": "totalPrice"
+        }
+      ],
+      "path": "invoiceItems"
     }
   ],
   "type": "default"

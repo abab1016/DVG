@@ -27,20 +27,25 @@ if plattform == "windows":
 else:
     sprint_path = os.path.join(hier, "BPMN")
 
-bpmn_file = os.path.join(sprint_path, "G7_Rechnungsfreigabe.bpmn")
+bpmn_file_standard = os.path.join(sprint_path, "G7_Rechnungsfreigabe.bpmn")
 bpmn_file_uipath = os.path.join(sprint_path, "G7_Rechnungsfreigabe_with_UiPath.bpmn")
+bpmn_file_ai = os.path.join(sprint_path, "G7_Rechnungsfreigabe_with_AI.bpmn")
 forms_dir = os.path.join(sprint_path, "Forms")
 
 print(f"[Deploy] Verwende Plattform: '{plattform}'")
-print(f"[Deploy] Lade BPMN aus: {bpmn_file} und {bpmn_file_uipath}")
+print(f"[Deploy] Lade Standard BPMN aus: {bpmn_file_standard}")
+print(f"[Deploy] Lade UiPath BPMN aus: {bpmn_file_uipath}")
+print(f"[Deploy] Lade AI BPMN aus: {bpmn_file_ai}")
 print(f"[Deploy] Lade Forms aus: {forms_dir}")
 
 RESSOURCEN = [
-    bpmn_file,
-    bpmn_file_uipath,
+    # bpmn_file_standard,  # Altes BPMN ohne AI – nicht mehr deployen
+    # bpmn_file_uipath,    # UiPath BPMN – nicht mehr deployen
+    bpmn_file_ai,
     os.path.join(forms_dir, "compliance-regeln.dmn"),
     os.path.join(forms_dir, "Compliance_Check.form"),
     os.path.join(forms_dir, "ERP_Bestaetigung.form"),
+    os.path.join(forms_dir, "Manuelle_Archivierung.form"),
     os.path.join(forms_dir, "Manuelle_Speicherung.form"),
     os.path.join(forms_dir, "Manuelle_Zahlung.form"),
     os.path.join(forms_dir, "Metadaten_Erfassung.form"),

@@ -1,0 +1,134 @@
+{
+  "id": "mbfv0YGLwrsHdZjo",
+  "name": "sprint6_ai_extraction",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sprint6-ai-extraction",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b6a78280-928e-4a6c-941b-417d7f7eb9b7",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "filePath": "=/data/{{ $json.body.fileName }}"
+      },
+      "id": "e4b526f2-be75-4d7a-85eb-598d1a1cb8e3",
+      "name": "Read Binary File",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const binaryBuffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst base64Pdf = binaryBuffer.toString('base64');\nconst webhookData = $('Webhook').first().json;\nconst fileName = webhookData.body.fileName;\n\nconst prompt = \"Extract the following invoice data from the provided PDF invoice.\\n\\nMandatory fields:\\n- invoiceId (Use the exact ID found, e.g. INV-2026-X. Do not invent one.)\\n- invoiceNumber (e.g. RE-2026-X)\\n- supplierName\\n- invoiceDate (Format YYYY-MM-DD)\\n- amountGross (Float number)\\n- currency (3-letter uppercase ISO code, e.g., EUR)\\n- iban (remove all spaces, e.g. DE1234...)\\n- billingAddress (complete billing address of the recipient)\\n\\nOptional fields:\\n- dueDate (Format YYYY-MM-DD)\\n- amountNet (Float number)\\n- supplierEmail\\n- invoiceItems (array of objects with description, quantity, unitPrice, totalPrice)\\n\\nFor each mandatory field, provide a confidence score between 0.0 and 1.0 based on how sure you are. Put these scores in a 'confidence' object with keys matching the field names.\\n\\nOutput MUST be a single, valid JSON object matching this schema:\\n{\\n  \\\"invoiceId\\\": \\\"...\\\",\\n  \\\"invoiceNumber\\\": \\\"...\\\",\\n  \\\"supplierName\\\": \\\"...\\\",\\n  \\\"supplierEmail\\\": \\\"...\\\",\\n  \\\"invoiceDate\\\": \\\"YYYY-MM-DD\\\",\\n  \\\"dueDate\\\": \\\"YYYY-MM-DD\\\",\\n  \\\"amountGross\\\": 123.45,\\n  \\\"amountNet\\\": 100.00,\\n  \\\"currency\\\": \\\"EUR\\\",\\n  \\\"iban\\\": \\\"...\\\",\\n  \\\"billingAddress\\\": \\\"...\\\",\\n  \\\"invoiceItems\\\": [\\n    {\\\"description\\\": \\\"...\\\", \\\"quantity\\\": 1.0, \\\"unitPrice\\\": 123.45, \\\"totalPrice\\\": 123.45}\\n  ],\\n  \\\"confidence\\\": {\\n    \\\"invoiceId\\\": 1.0,\\n    \\\"invoiceNumber\\\": 1.0,\\n    \\\"supplierName\\\": 1.0,\\n    \\\"invoiceDate\\\": 1.0,\\n    \\\"amountGross\\\": 1.0,\\n    \\\"currency\\\": 1.0,\\n    \\\"iban\\\": 1.0,\\n    \\\"billingAddress\\\": 1.0\\n  }\\n}\";\n\nconst requestBody = {\n  contents: [\n    {\n      parts: [\n        {\n          inlineData: {\n            mimeType: \"application/pdf\",\n            data: base64Pdf\n          }\n        },\n        {\n          text: prompt\n        }\n      ]\n    }\n  ],\n  generationConfig: {\n    responseMimeType: \"application/json\"\n  }\n};\n\nreturn [{ json: { requestBody, fileName } }];"
+      },
+      "id": "c621d9be-5bb7-4b71-ab7d-94cb8be75cbe",
+      "name": "Build API Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}"
+      },
+      "id": "d748f3b1-a7b2-4d7a-ba92-d66a6a3b680f",
+      "name": "Google Gemini API Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst responseText = response.candidates[0].content.parts[0].text;\nlet parsedData;\n\ntry {\n  parsedData = JSON.parse(responseText);\n} catch (e) {\n  parsedData = {\n    error: \"Failed to parse model response as JSON\",\n    rawResponse: responseText\n  };\n}\n\nconst webhookData = $('Webhook').first().json;\nparsedData.sourceFile = webhookData.body.fileName;\nparsedData.extractionEngine = \"n8n+gemini-2.5-flash\";\n\nreturn [{ json: parsedData }];"
+      },
+      "id": "e6a2b8e3-51b7-4c7a-97bb-6cbfa21cb0ff",
+      "name": "Parse & Clean Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "id": "87fb738d-190f-488f-a78b-d7be824bc3b2",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Binary File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Binary File": {
+      "main": [
+        [
+          {
+            "node": "Build API Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build API Request": {
+      "main": [
+        [
+          {
+            "node": "Google Gemini API Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini API Call": {
+      "main": [
+        [
+          {
+            "node": "Parse & Clean Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Clean Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "active": true
+}

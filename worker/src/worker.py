@@ -23,6 +23,7 @@ from handlers.info_request_handler import registriere_info_request_handler
 from handlers.payment_handler import registriere_payment_handler
 from handlers.pdf_handler import registriere_pdf_handler
 from handlers.uipath_handler import registriere_uipath_handler
+from handlers.ai_extraction_handler import registriere_ai_extraction_handler
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
@@ -200,6 +201,7 @@ async def main() -> None:
     registriere_archive_handler(worker)
     registriere_info_request_handler(worker)
     registriere_uipath_handler(worker)
+    registriere_ai_extraction_handler(worker)
 
     # Startet das REST-Gateway für Postman
     loop = asyncio.get_running_loop()
@@ -207,7 +209,7 @@ async def main() -> None:
 
     logger.info(
         "Worker bereit, abonniere Job-Types: "
-        "extract-pdf-metadata, save-invoice-metadata, send-payment-order, "
+        "run-ai-extraction, extract-pdf-metadata, save-invoice-metadata, send-payment-order, "
         "archive-invoice, send-information-request, uipath-erp-erfassung"
     )
     await worker.work()

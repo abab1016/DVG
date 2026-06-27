@@ -1,0 +1,24 @@
+{
+  "invoiceId": "INV-2026-141",
+  "invoiceNumber": "RE-2026-141",
+  "supplierName": "",
+  "invoiceDate": "2026-06-21",
+  "dueDate": "2026-07-21",
+  "amountGross": 100.00,
+  "amountNet": 84.03,
+  "currency": "EUR",
+  "iban": "DE89370400440532013000",
+  "billingAddress": "Hauptstrasse 12, 12345 Berlin",
+  "confidence": {
+    "invoiceId": 0.95,
+    "invoiceNumber": 0.98,
+    "supplierName": 0.0,
+    "invoiceDate": 0.97,
+    "amountGross": 0.95,
+    "currency": 0.99,
+    "iban": 0.50,
+    "billingAddress": 0.92
+  },
+  "sourceFile": "INV-2026-141.pdf",
+  "extractionEngine": "n8n+gemini-1.5"
+}

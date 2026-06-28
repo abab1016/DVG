@@ -52,6 +52,7 @@ RESSOURCEN = [
     os.path.join(forms_dir, "Portal_Start.form"),
     os.path.join(forms_dir, "Rechnungs_Pruefung.form"),
     os.path.join(forms_dir, "Rueckfrage.form"),
+    os.path.join(forms_dir, "Manager_Pruefung.form"),
 ]
 
 

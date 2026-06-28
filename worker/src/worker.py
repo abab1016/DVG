@@ -24,6 +24,7 @@ from handlers.payment_handler import registriere_payment_handler
 from handlers.pdf_handler import registriere_pdf_handler
 from handlers.uipath_handler import registriere_uipath_handler
 from handlers.ai_extraction_handler import registriere_ai_extraction_handler
+from failure_injection import component_failure_exception_handler
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
@@ -191,7 +192,10 @@ async def main() -> None:
     logger.info("Starte Worker, verbinde mit Zeebe: %s", ZEEBE_ADRESSE)
 
     kanal = create_insecure_channel(grpc_address=ZEEBE_ADRESSE)
-    worker = ZeebeWorker(kanal)
+    worker = ZeebeWorker(
+        kanal,
+        exception_handler=component_failure_exception_handler,
+    )
     client = ZeebeClient(kanal)
 
     # Registriere alle Job-Handler

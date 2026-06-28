@@ -18,6 +18,7 @@ from typing import Any, Dict
 import pika
 from pyzeebe.errors import BusinessError
 
+from failure_injection import raise_if_failure_enabled
 from mapping.payment_mapping import MappingFehler, variablen_zu_zahlungsauftrag
 
 _HIER = Path(__file__).resolve().parent
@@ -45,6 +46,8 @@ async def handle_zahlung_senden(**variablen: Any) -> Dict[str, Any]:
     invoice_id = variablen.get("invoiceId", "<ohne ID>")
     logger.info("[%s] Job empfangen fuer Rechnung %s",
                 JOB_TYPE_ZAHLUNG_SENDEN, invoice_id)
+
+    raise_if_failure_enabled("rabbitmq")
 
     try:
         rechnung = variablen_zu_zahlungsauftrag(variablen)

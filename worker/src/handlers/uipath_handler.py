@@ -22,6 +22,8 @@ import asyncio
 from typing import Any, Dict
 from pyzeebe.errors import BusinessError
 
+from failure_injection import raise_if_failure_enabled
+
 logger = logging.getLogger(__name__)
 
 JOB_TYPE_UIPATH_ERP = "uipath-erp-erfassung"
@@ -46,6 +48,8 @@ async def handle_uipath_erp_erfassung(**variablen: Any) -> Dict[str, Any]:
     supplier_name = variablen.get("supplierName", "Unbekannter Lieferant")
     amount_gross = variablen.get("amountGross", 0.0)
     amount_net = variablen.get("amountNet", amount_gross / 1.19)
+
+    raise_if_failure_enabled("erp")
     
     # Payload für den Bot (Header + Positionen)
     payload = {

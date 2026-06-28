@@ -16,6 +16,7 @@ from typing import Any, Dict
 import grpc
 from pyzeebe.errors import BusinessError
 
+from failure_injection import raise_if_failure_enabled
 from mapping.grpc_mapping import MappingFehler, variablen_zu_rechnung
 
 _HIER = Path(__file__).resolve().parent
@@ -51,6 +52,8 @@ async def handle_grpc_speichern(**variablen: Any) -> Dict[str, Any]:
     invoice_id = variablen.get("invoiceId", "<ohne ID>")
     logger.info("[%s] Job empfangen für Rechnung %s",
                 JOB_TYPE_GRPC_SPEICHERN, invoice_id)
+
+    raise_if_failure_enabled("grpc")
 
     try:
         rechnung = variablen_zu_rechnung(variablen)

@@ -2,8 +2,9 @@
 # Installation and setup script for DVG Invoice Approval System
 # Supports macOS and Windows (Git Bash/WSL)
 
-HIER="$(cd "$(dirname "$0")" && pwd)"
-cd "$HIER"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 echo "=========================================================="
 echo "  DVG Invoice System - Installation & Setup"
@@ -81,6 +82,6 @@ echo "  [ERFOLG] Installation und Setup abgeschlossen!"
 echo "=========================================================="
 echo "  Die Plattform wurde auf '$PLATFORM' konfiguriert."
 echo "  Du kannst das System nun starten mit:"
-echo "  -> ./start_all.sh"
+echo "  -> ./scripts/start_all.sh"
 echo "=========================================================="
 echo ""

@@ -2,6 +2,10 @@
 rem Stop script for DVG Invoice Approval System on Windows
 rem Entspricht stop_all.sh fuer macOS
 
+set "SCRIPT_DIR=%~dp0"
+for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
+cd /d "%PROJECT_ROOT%"
+
 set "COMPOSE_PROJECT_NAME=dvg-app"
 
 echo ===========================================
@@ -53,7 +57,7 @@ echo.
 echo ===========================================
 echo   [ERFOLG] Alles wurde gestoppt!
 echo ===========================================
-echo   Zum Neustarten: start_all.bat
+echo   Zum Neustarten: scripts\start_all.bat
 echo ===========================================
 echo.
 pause

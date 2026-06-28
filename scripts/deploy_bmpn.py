@@ -1,36 +1,30 @@
 import asyncio
 import os
 import sys
+from pathlib import Path
 
 from pyzeebe import ZeebeClient, create_insecure_channel
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
 # Plattform aus plattform.txt auslesen oder auto-detektieren
-hier = os.path.dirname(os.path.abspath(__file__))
-plattform_file = os.path.join(hier, "plattform.txt")
+PROJEKT_WURZEL = Path(__file__).resolve().parent.parent
+plattform_file = PROJEKT_WURZEL / "plattform.txt"
 plattform = "mac"
 
-if os.path.exists(plattform_file):
-    with open(plattform_file, "r", encoding="utf-8") as f:
+if plattform_file.exists():
+    with plattform_file.open("r", encoding="utf-8") as f:
         plattform = f.read().strip().lower()
 else:
     if sys.platform.startswith("win"):
         plattform = "windows"
 
-# Bestimmen des Pfads für BPMN-Dateien und Forms
-if plattform == "windows":
-    sprint_path = r"C:\Users\abuba\Downloads\Sprint 4"
-    if not os.path.exists(sprint_path):
-        print(f"[Deploy] Windows-Pfad {sprint_path} existiert nicht. Verwende relativen Pfad.")
-        sprint_path = os.path.join(hier, "BPMN")
-else:
-    sprint_path = os.path.join(hier, "BPMN")
-
-bpmn_file_standard = os.path.join(sprint_path, "G7_Rechnungsfreigabe.bpmn")
-bpmn_file_uipath = os.path.join(sprint_path, "G7_Rechnungsfreigabe_with_UiPath.bpmn")
-bpmn_file_ai = os.path.join(sprint_path, "G7_Rechnungsfreigabe_with_AI.bpmn")
-forms_dir = os.path.join(sprint_path, "Forms")
+# BPMN-Ressourcen liegen auf allen Plattformen im Projektordner.
+sprint_path = PROJEKT_WURZEL / "BPMN"
+bpmn_file_standard = sprint_path / "G7_Rechnungsfreigabe.bpmn"
+bpmn_file_uipath = sprint_path / "G7_Rechnungsfreigabe_with_UiPath.bpmn"
+bpmn_file_ai = sprint_path / "G7_Rechnungsfreigabe_with_AI.bpmn"
+forms_dir = sprint_path / "Forms"
 
 print(f"[Deploy] Verwende Plattform: '{plattform}'")
 print(f"[Deploy] Lade Standard BPMN aus: {bpmn_file_standard}")
@@ -42,30 +36,30 @@ RESSOURCEN = [
     # bpmn_file_standard,  # Altes BPMN ohne AI – nicht mehr deployen
     # bpmn_file_uipath,    # UiPath BPMN – nicht mehr deployen
     bpmn_file_ai,
-    os.path.join(forms_dir, "compliance-regeln.dmn"),
-    os.path.join(forms_dir, "Compliance_Check.form"),
-    os.path.join(forms_dir, "ERP_Bestaetigung.form"),
-    os.path.join(forms_dir, "Manuelle_Archivierung.form"),
-    os.path.join(forms_dir, "Manuelle_Speicherung.form"),
-    os.path.join(forms_dir, "Manuelle_Zahlung.form"),
-    os.path.join(forms_dir, "Metadaten_Erfassung.form"),
-    os.path.join(forms_dir, "Portal_Start.form"),
-    os.path.join(forms_dir, "Rechnungs_Pruefung.form"),
-    os.path.join(forms_dir, "Rueckfrage.form"),
-    os.path.join(forms_dir, "Manager_Pruefung.form"),
+    forms_dir / "compliance-regeln.dmn",
+    forms_dir / "Compliance_Check.form",
+    forms_dir / "ERP_Bestaetigung.form",
+    forms_dir / "Manuelle_Archivierung.form",
+    forms_dir / "Manuelle_Speicherung.form",
+    forms_dir / "Manuelle_Zahlung.form",
+    forms_dir / "Metadaten_Erfassung.form",
+    forms_dir / "Portal_Start.form",
+    forms_dir / "Rechnungs_Pruefung.form",
+    forms_dir / "Rueckfrage.form",
+    forms_dir / "Manager_Pruefung.form",
 ]
 
 
 async def main() -> None:
     # Überprüfen, ob alle Dateien existieren
     for res in RESSOURCEN:
-        if not os.path.exists(res):
+        if not res.exists():
             print(f"[Deploy] Fehler: Datei existiert nicht: {res}")
             sys.exit(1)
 
     kanal = create_insecure_channel(grpc_address=ZEEBE_ADRESSE)
     client = ZeebeClient(kanal)
-    antwort = await client.deploy_resource(*RESSOURCEN)
+    antwort = await client.deploy_resource(*(str(res) for res in RESSOURCEN))
     for d in antwort.deployments:
         print(d)
 

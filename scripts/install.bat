@@ -1,6 +1,10 @@
 @echo off
 rem Installation and setup script for DVG Invoice Approval System on Windows
 
+set "SCRIPT_DIR=%~dp0"
+for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
+cd /d "%PROJECT_ROOT%"
+
 echo ==========================================================
 echo   DVG Invoice System - Installation ^& Setup (Windows)
 echo ==========================================================
@@ -93,7 +97,8 @@ echo ==========================================================
 echo   [ERFOLG] Installation und Setup abgeschlossen!
 echo ==========================================================
 echo   Die Plattform wurde auf '%PLATFORM%' konfiguriert.
-echo   Du kannst das System nun starten.
+echo   Du kannst das System nun starten mit:
+echo   -^> scripts\start_all.bat
 echo ==========================================================
 echo.
 pause

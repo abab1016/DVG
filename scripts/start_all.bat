@@ -3,8 +3,9 @@ setlocal EnableExtensions EnableDelayedExpansion
 rem Startup script for DVG Invoice Approval System on Windows
 rem Entspricht start_all.sh fuer macOS
 
-set "HIER=%~dp0"
-cd /d "%HIER%"
+set "SCRIPT_DIR=%~dp0"
+for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
+cd /d "%PROJECT_ROOT%"
 
 set "COMPOSE_PROJECT_NAME=dvg-app"
 
@@ -74,7 +75,7 @@ if %ZEEBE_READY% equ 0 (
 rem 3. Deploy BPMN and Forms
 echo.
 echo ^>^>^> 3. Stelle BPMN-Prozess und Formulare bereit...
-%PYTHON_CMD% "%HIER%deploy_bmpn.py"
+%PYTHON_CMD% "%SCRIPT_DIR%deploy_bmpn.py"
 if %ERRORLEVEL% neq 0 (
   echo    [FEHLER] BPMN-Deployment fehlgeschlagen!
   pause
@@ -86,13 +87,13 @@ echo.
 echo ^>^>^> 4. Starte Backend-Dienste in neuen Fenstern...
 
 echo    -^> Starte gRPC Server...
-start "gRPC-Server" cmd /k "cd /d "%HIER%" && echo === gRPC-Server === && %PYTHON_CMD% grpc-service\src\server.py"
+start "gRPC-Server" cmd /k "cd /d ""%PROJECT_ROOT%"" && echo === gRPC-Server === && %PYTHON_CMD% grpc-service\src\server.py"
 
 echo    -^> Starte Worker...
-start "Worker" cmd /k "cd /d "%HIER%" && echo === Worker === && %PYTHON_CMD% worker\src\worker.py"
+start "Worker" cmd /k "cd /d ""%PROJECT_ROOT%"" && echo === Worker === && %PYTHON_CMD% worker\src\worker.py"
 
 echo    -^> Starte RabbitMQ Consumer...
-start "RabbitMQ-Consumer" cmd /k "cd /d "%HIER%" && echo === RabbitMQ Consumer === && %PYTHON_CMD% zahlungssystem\src\consumer.py"
+start "RabbitMQ-Consumer" cmd /k "cd /d ""%PROJECT_ROOT%"" && echo === RabbitMQ Consumer === && %PYTHON_CMD% zahlungssystem\src\consumer.py"
 
 echo.
 echo ===========================================================
@@ -103,7 +104,7 @@ echo   - Operate:  http://localhost:8081  (Login: demo / demo)
 echo   - RabbitMQ: http://localhost:15672 (Login: admin / admin)
 echo.
 echo   Du kannst jetzt eine neue E-Mail-Rechnung simulieren mit:
-echo   -^> %PYTHON_CMD% auto_email_start.py
+echo   -^> %PYTHON_CMD% scripts\auto_email_start.py
 echo ===========================================================
 echo.
 pause

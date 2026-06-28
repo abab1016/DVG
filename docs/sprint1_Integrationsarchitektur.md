@@ -92,14 +92,14 @@ python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/
 
 ## End-to-End-Demo
 
-Der vollständige Ablauf wird durch `demo.sh` automatisiert:
+Der vollständige Ablauf wird durch `scripts/demo.sh` automatisiert:
 
 ```bash
 # Automatischer Demo-Durchlauf (kein Menü):
-bash demo.sh --demo
+bash scripts/demo.sh --demo
 
 # Interaktives Menü:
-bash demo.sh
+bash scripts/demo.sh
 ```
 
 Das Skript:

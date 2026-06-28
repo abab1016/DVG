@@ -83,7 +83,7 @@ OPENROUTER_API_KEY=dein-api-key-von-openrouter
 n8n greift über die Umgebungsvariablen automatisch auf diesen Key zu (`$env.OPENROUTER_API_KEY`).
 
 ### 3.3 Workflow importieren
-Der fertige Workflow ist unter [n8n/workflows/sprint6_ai_extraction.json](file:///Users/swe/DVG/DVG/n8n/workflows/sprint6_ai_extraction.json) abgelegt.
+Der fertige Workflow ist unter [n8n/workflows/sprint6_ai_extraction.json](../n8n/workflows/sprint6_ai_extraction.json) abgelegt.
 1. Öffne das n8n-Dashboard unter [http://localhost:5678](http://localhost:5678).
 2. Klicke auf **Workflows** → **Add Workflow** → **Import from File**.
 3. Wähle die Datei `sprint6_ai_extraction.json` aus.
@@ -93,7 +93,7 @@ Der fertige Workflow ist unter [n8n/workflows/sprint6_ai_extraction.json](file:/
 
 ## 4. Datenvertrag & Plausibilitätsprüfung
 
-Der Datenvertrag ist in [ai_extraction_mapping.py](file:///Users/swe/DVG/DVG/worker/src/mapping/ai_extraction_mapping.py) fest definiert.
+Der Datenvertrag ist in [ai_extraction_mapping.py](../worker/src/mapping/ai_extraction_mapping.py) fest definiert.
 
 ### 4.1 Plausibilitätsregeln (`pruefe_plausibilitaet`)
 Eine Extraktion gilt als **VALID**, wenn:
@@ -116,7 +116,7 @@ Dadurch ist gewährleistet, dass der Geschäftsprozess bei Systemausfällen niem
 ## 5. Camunda BPMN- & Formular-Anpassungen
 
 ### 5.1 BPMN-Modell (`G7_Rechnungsfreigabe_with_AI.bpmn`)
-Der Prozess wurde in [G7_Rechnungsfreigabe_with_AI.bpmn](file:///Users/swe/DVG/DVG/BPMN/G7_Rechnungsfreigabe_with_AI.bpmn) neu modelliert und in [deploy_bmpn.py](file:///Users/swe/DVG/DVG/deploy_bmpn.py) als exklusives Deployment registriert.
+Der Prozess wurde in [G7_Rechnungsfreigabe_with_AI.bpmn](../BPMN/G7_Rechnungsfreigabe_with_AI.bpmn) neu modelliert und in [scripts/deploy_bmpn.py](../scripts/deploy_bmpn.py) als exklusives Deployment registriert.
 
 ```text
 [StartEvent_Email] 
@@ -127,7 +127,7 @@ Der Prozess wurde in [G7_Rechnungsfreigabe_with_AI.bpmn](file:///Users/swe/DVG/D
 ```
 
 ### 5.2 Human-Review-Formular (`Metadaten_Erfassung.form`)
-Das Formular in [Metadaten_Erfassung.form](file:///Users/swe/DVG/DVG/BPMN/Forms/Metadaten_Erfassung.form) wurde erweitert:
+Das Formular in [Metadaten_Erfassung.form](../BPMN/Forms/Metadaten_Erfassung.form) wurde erweitert:
 - Am Anfang wird eine gelbe Warnbox mit den Ursachen für den Review (`{{aiReviewGruende}}`) eingeblendet.
 - Diese Warnbox wird über die FEEL-Bedingung `=aiPlausibilityStatus != "NEEDS_REVIEW"` ausgeblendet, falls der Prozess über das Portal gestartet wird (keine KI-Fehler).
 
@@ -138,11 +138,11 @@ Das Formular in [Metadaten_Erfassung.form](file:///Users/swe/DVG/DVG/BPMN/Forms/
 1. **Umgebung vorbereiten**: Trage deinen OpenRouter API-Key in `.env` ein.
 2. **Dienste starten**:
    ```bash
-   ./start_all.sh
+   ./scripts/start_all.sh
    ```
-3. **n8n Workflow aktivieren**: Importiere und aktiviere die Datei [sprint6_ai_extraction.json](file:///Users/swe/DVG/DVG/n8n/workflows/sprint6_ai_extraction.json) unter [http://localhost:5678](http://localhost:5678).
+3. **n8n Workflow aktivieren**: Importiere und aktiviere die Datei [sprint6_ai_extraction.json](../n8n/workflows/sprint6_ai_extraction.json) unter [http://localhost:5678](http://localhost:5678).
 4. **Happy-Path simulieren**:
-   - Führe `python3 auto_email_start.py` aus.
+   - Führe `python3 scripts/auto_email_start.py` aus.
    - Da die standardmäßige Beispielrechnung alle Pflichtfelder enthält und das LLM diese mit hoher Confidence extrahiert, läuft der Prozess vollautomatisch durch:
      - Die Metadaten werden im gRPC-Service gespeichert.
      - Der UiPath RPA-Bot erfasst die Daten (simuliert oder echt).

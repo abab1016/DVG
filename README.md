@@ -42,7 +42,17 @@ python -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/in
 Am einfachsten geht es mit dem Demo-Skript, das alles in der richtigen Reihenfolge startet:
 
 ```bash
-bash demo.sh
+bash scripts/demo.sh
+```
+
+Alternativ stehen die plattformspezifischen Startskripte zur Verfügung:
+
+```powershell
+scripts\start_all.bat
+```
+
+```bash
+./scripts/start_all.sh
 ```
 
 Das Skript startet RabbitMQ und Camunda 8 (Zeebe/Operate/Tasklist), wartet bis Zeebe bereit ist, startet dann gRPC-Service und Zahlungssystem im Hintergrund und schließlich den pyzeebe-Worker im Vordergrund. Strg+C beendet die Hintergrundprozesse sauber.

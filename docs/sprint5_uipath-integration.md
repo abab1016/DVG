@@ -115,7 +115,7 @@ flowchart TD
 ```
 
 ### 5.1 Das erweiterte BPMN-Modell
-Das neue Prozessmodell ist in [BPMN/G7_Rechnungsfreigabe_with_UiPath.bpmn](file:///Users/swe/DVG/DVG/BPMN/G7_Rechnungsfreigabe_with_UiPath.bpmn) implementiert.
+Das neue Prozessmodell ist in [BPMN/G7_Rechnungsfreigabe_with_UiPath.bpmn](../BPMN/G7_Rechnungsfreigabe_with_UiPath.bpmn) implementiert.
 
 * **Prozess-ID:** `Process_Rechnungsfreigabe_UiPath`
 * **Prozessname:** `Rechnungsfreigabeprozess mit UiPath-Bot`
@@ -131,7 +131,7 @@ Das neue Prozessmodell ist in [BPMN/G7_Rechnungsfreigabe_with_UiPath.bpmn](file:
 Da in der lokalen Testumgebung kein Live-Zugang zur Cloud-Instanz des UiPath-Orchestrators besteht, wurde die Schnittstelle im Python-Worker (`pyzeebe`) **simuliert**. Dies ermöglicht eine vollständige, lokale Ausführung und Demonstration des Zielbilds.
 
 ### 6.1 Der uipath_handler.py
-Ein neuer Job-Handler [worker/src/handlers/uipath_handler.py](file:///Users/swe/DVG/DVG/worker/src/handlers/uipath_handler.py) wurde erstellt und in [worker/src/worker.py](file:///Users/swe/DVG/DVG/worker/src/worker.py) registriert.
+Ein neuer Job-Handler [worker/src/handlers/uipath_handler.py](../worker/src/handlers/uipath_handler.py) wurde erstellt und in [worker/src/worker.py](../worker/src/worker.py) registriert.
 
 Der Handler simuliert die Ausführungsschritte des UiPath Studio Web Bots:
 1. **Liest Rechnungsdaten** aus den Camunda-Prozessvariablen.
@@ -149,9 +149,9 @@ Die Demo zeigt beide Szenarien des BPMN-Zielbilds: Den automatischen Happy Path 
 ### 7.1 Vorbereitung
 1. Stelle sicher, dass die Docker-Infrastruktur und die Backend-Dienste laufen:
    ```bash
-   bash start_all.sh
+   bash scripts/start_all.sh
    ```
-   *Hinweis: Das Skript `deploy_bmpn.py` lädt automatisch beide BPMN-Prozesse (`G7_Rechnungsfreigabe.bpmn` und `G7_Rechnungsfreigabe_with_UiPath.bpmn`) in die Engine.*
+   *Hinweis: Das Skript `scripts/deploy_bmpn.py` lädt automatisch beide BPMN-Prozesse (`G7_Rechnungsfreigabe.bpmn` und `G7_Rechnungsfreigabe_with_UiPath.bpmn`) in die Engine.*
 2. Öffne die Camunda Tasklist (`http://localhost:8082`, demo/demo) und Operate (`http://localhost:8081`, demo/demo).
 
 ### 7.2 Szenario 1: Happy Path (Erfolgreiche ERP-Erfassung per Bot)

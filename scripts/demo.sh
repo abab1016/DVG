@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 echo "=== Docker starten ==="
 docker compose up -d
 
@@ -15,7 +19,7 @@ for i in $(seq 1 30); do
 done
 
 echo "=== Ressourcen deployen ==="
-python deploy_alles.py
+python "$SCRIPT_DIR/deploy_bmpn.py"
 
 echo "=== Worker starten (neues Fenster) ==="
 cmd.exe /c "start cmd /k python worker\src\worker.py"

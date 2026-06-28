@@ -1,6 +1,10 @@
 #!/bin/bash
 # Stop script for DVG Invoice Approval System on macOS
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 # Muss zum start_all.sh Projektnamen passen
 export COMPOSE_PROJECT_NAME=dvg-app
 
@@ -71,7 +75,7 @@ echo ""
 echo "==========================================="
 echo "  [ERFOLG] Alles wurde gestoppt!"
 echo "==========================================="
-echo "  Zum Neustarten: ./start_all.sh"
+echo "  Zum Neustarten: ./scripts/start_all.sh"
 echo "==========================================="
 echo ""
 

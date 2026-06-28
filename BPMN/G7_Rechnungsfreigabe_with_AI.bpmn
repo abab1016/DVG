@@ -40,7 +40,6 @@
         <bpmn:flowNodeRef>Task_ComplianceRules</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_ComplianceErforderlich</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_AntwortErhalten</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Gateway_MergeBeforegRPC</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_MergeBeforeManager</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_ComplianceBestanden</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Boundary_Error_gRPC</bpmn:flowNodeRef>
@@ -77,6 +76,7 @@
       <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
       <bpmn:outgoing>Flow_InfoRequired</bpmn:outgoing>
       <bpmn:outgoing>Flow_CorrectionRequired</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0p5e2tq</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Task_UiPathERPErfassung" name="Rechnung im ERP per Bot erfassen">
       <bpmn:extensionElements>
@@ -265,7 +265,6 @@
     <bpmn:sequenceFlow id="Flow_ComplianceRulesToGateway" sourceRef="Task_ComplianceRules" targetRef="Gateway_ComplianceErforderlich" />
     <bpmn:sequenceFlow id="Flow_GRPCToCompliance" sourceRef="Gateway_MergeAfterGRPC" targetRef="Task_ComplianceRules" />
     <bpmn:sequenceFlow id="Flow_GRPCToMerge" sourceRef="Task_MetadatenSpeichern" targetRef="Gateway_MergeAfterGRPC" />
-    <bpmn:sequenceFlow id="Flow_ToGRPC" sourceRef="Gateway_MergeBeforegRPC" targetRef="Task_MetadatenSpeichern" />
     <bpmn:sequenceFlow id="Flow_FallbackToMerge" sourceRef="Task_ManuellSpeichern" targetRef="Gateway_MergeAfterGRPC" />
     <bpmn:sequenceFlow id="Flow_GRPCErrorToFallback" sourceRef="Boundary_Error_gRPC" targetRef="Task_ManuellSpeichern" />
     <bpmn:sequenceFlow id="Flow_ComplianceYes" name="Ja" sourceRef="Gateway_ComplianceErforderlich" targetRef="Task_ComplianceCheck">
@@ -274,7 +273,6 @@
     <bpmn:sequenceFlow id="Flow_CompliancePassed" name="Ja" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeERP">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(complianceDecision = "PASSED")</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-
     <bpmn:boundaryEvent id="Boundary_Error_gRPC" name="gRPC Fehler" attachedToRef="Task_MetadatenSpeichern">
       <bpmn:outgoing>Flow_GRPCErrorToFallback</bpmn:outgoing>
       <bpmn:errorEventDefinition errorRef="Error_gRPC_ID" zeebe:errorMessageVariable="errorMessage" />
@@ -305,13 +303,9 @@
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="save-invoice-metadata" retries="3" />
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_ToGRPC</bpmn:incoming>
+      <bpmn:incoming>Flow_0p5e2tq</bpmn:incoming>
       <bpmn:outgoing>Flow_GRPCToMerge</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_MergeBeforegRPC" name="Merge vor gRPC">
-      <bpmn:incoming>Flow_Approved</bpmn:incoming>
-      <bpmn:outgoing>Flow_ToGRPC</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="Flow_ComplianceCheckToGateway" sourceRef="Task_ComplianceCheck" targetRef="Gateway_ComplianceBestanden" />
     <bpmn:sequenceFlow id="Flow_ComplianceFailed" name="Nein" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeManager" />
     <bpmn:sequenceFlow id="Flow_ManagerToEnd" sourceRef="Task_VorgangPruefenManager" targetRef="EndEvent_VorgangAbgeschlossenManager" />
@@ -343,9 +337,9 @@
       <bpmn:outgoing>Flow_ComplianceFailed</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:exclusiveGateway id="Gateway_MergeBeforeManager" name="Merge Manager">
-      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
       <bpmn:incoming>Flow_ComplianceFailed</bpmn:incoming>
       <bpmn:incoming>Flow_TimerToAbbruch</bpmn:incoming>
+      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
       <bpmn:outgoing>Flow_MergeToManager</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="Task_VorgangPruefenManager" name="Vorgang prüfen (Manager)">
@@ -357,6 +351,9 @@
       <bpmn:incoming>Flow_MergeToManager</bpmn:incoming>
       <bpmn:outgoing>Flow_ManagerToEnd</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0p5e2tq" name="Ja" sourceRef="Gateway_Freigabeentscheidung" targetRef="Task_MetadatenSpeichern">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(approvalDecision = "APPROVED")</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
   </bpmn:process>
   <bpmn:error id="Error_gRPC_ID" name="gRPC Error" errorCode="ERR_GRPC" />
   <bpmn:error id="Error_RabbitMQ_ID" name="RabbitMQ Error" errorCode="ERR_RABBITMQ" />
@@ -387,12 +384,6 @@
         <dc:Bounds x="885" y="335" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="819" y="312" width="63" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_MergeBeforeERP_di" bpmnElement="Gateway_MergeBeforeERP" isMarkerVisible="true">
-        <dc:Bounds x="2555" y="335" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2552" y="311" width="57" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_UiPathERPErfassung_di" bpmnElement="Task_UiPathERPErfassung">
@@ -480,20 +471,20 @@
           <dc:Bounds x="764" y="222" width="71" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_MetadatenSpeichern_di" bpmnElement="Task_MetadatenSpeichern">
-        <dc:Bounds x="1510" y="200" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_MergeAfterGRPC_di" bpmnElement="Gateway_MergeAfterGRPC" isMarkerVisible="true">
-        <dc:Bounds x="1755" y="215" width="50" height="50" />
+      <bpmndi:BPMNShape id="Event_AntwortErhalten_di" bpmnElement="Event_AntwortErhalten">
+        <dc:Bounds x="1172" y="142" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1748" y="191" width="64" height="14" />
+          <dc:Bounds x="1080.5" y="153" width="81" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ComplianceRules_di" bpmnElement="Task_ComplianceRules">
-        <dc:Bounds x="1930" y="200" width="100" height="80" />
+      <bpmndi:BPMNShape id="Task_ERPErfassung_di" bpmnElement="Task_ERPErfassung">
+        <dc:Bounds x="2660" y="600" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ComplianceCheck_di" bpmnElement="Task_ComplianceCheck">
-        <dc:Bounds x="2050" y="600" width="100" height="80" />
+      <bpmndi:BPMNShape id="Gateway_MergeBeforeERP_di" bpmnElement="Gateway_MergeBeforeERP" isMarkerVisible="true">
+        <dc:Bounds x="2555" y="335" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2552" y="311" width="57" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_ComplianceErforderlich_di" bpmnElement="Gateway_ComplianceErforderlich" isMarkerVisible="true">
         <dc:Bounds x="2075" y="215" width="50" height="50" />
@@ -501,20 +492,17 @@
           <dc:Bounds x="2069" y="178" width="62" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_AntwortErhalten_di" bpmnElement="Event_AntwortErhalten">
-        <dc:Bounds x="1172" y="142" width="36" height="36" />
+      <bpmndi:BPMNShape id="Task_ComplianceRules_di" bpmnElement="Task_ComplianceRules">
+        <dc:Bounds x="1930" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MergeAfterGRPC_di" bpmnElement="Gateway_MergeAfterGRPC" isMarkerVisible="true">
+        <dc:Bounds x="1755" y="215" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1080.5" y="153" width="81" height="14" />
+          <dc:Bounds x="1748" y="191" width="64" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ManuellSpeichern_di" bpmnElement="Task_ManuellSpeichern">
-        <dc:Bounds x="1510" y="600" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ERPErfassung_di" bpmnElement="Task_ERPErfassung">
-        <dc:Bounds x="2660" y="600" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_VorgangPruefenManager_di" bpmnElement="Task_VorgangPruefenManager">
-        <dc:Bounds x="1220" y="600" width="100" height="80" />
+      <bpmndi:BPMNShape id="Task_MetadatenSpeichern_di" bpmnElement="Task_MetadatenSpeichern">
+        <dc:Bounds x="1510" y="200" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_VorgangAbgeschlossenManager_di" bpmnElement="EndEvent_VorgangAbgeschlossenManager">
         <dc:Bounds x="1352" y="622" width="36" height="36" />
@@ -522,23 +510,26 @@
           <dc:Bounds x="1333" y="668" width="74" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_MergeBeforeManager_di" bpmnElement="Gateway_MergeBeforeManager" isMarkerVisible="true">
-        <dc:Bounds x="1245" y="425" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1171" y="423" width="78" height="14" />
-        </bpmndi:BPMNLabel>
+      <bpmndi:BPMNShape id="Task_ManuellSpeichern_di" bpmnElement="Task_ManuellSpeichern">
+        <dc:Bounds x="1510" y="600" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_MergeBeforegRPC_di" bpmnElement="Gateway_MergeBeforegRPC" isMarkerVisible="true">
-        <dc:Bounds x="1105" y="335" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1089" y="311" width="82" height="14" />
-        </bpmndi:BPMNLabel>
+      <bpmndi:BPMNShape id="Task_ComplianceCheck_di" bpmnElement="Task_ComplianceCheck">
+        <dc:Bounds x="2050" y="600" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_ComplianceBestanden_di" bpmnElement="Gateway_ComplianceBestanden" isMarkerVisible="true">
         <dc:Bounds x="2205" y="425" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="2200" y="387.5" width="59" height="27" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MergeBeforeManager_di" bpmnElement="Gateway_MergeBeforeManager" isMarkerVisible="true">
+        <dc:Bounds x="1245" y="425" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1161" y="473" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VorgangPruefenManager_di" bpmnElement="Task_VorgangPruefenManager">
+        <dc:Bounds x="1220" y="600" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Boundary_Error_gRPC_di" bpmnElement="Boundary_Error_gRPC">
         <dc:Bounds x="1542" y="262" width="36" height="36" />
@@ -570,14 +561,6 @@
           <dc:Bounds x="3250" y="415" width="65" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_MergeToManager_di" bpmnElement="Flow_MergeToManager">
-        <di:waypoint x="1270" y="475" />
-        <di:waypoint x="1270" y="600" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ManagerToEnd_di" bpmnElement="Flow_ManagerToEnd">
-        <di:waypoint x="1320" y="640" />
-        <di:waypoint x="1352" y="640" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_PlausibilityNo_di" bpmnElement="Flow_PlausibilityNo">
         <di:waypoint x="555" y="330" />
         <di:waypoint x="610" y="330" />
@@ -614,10 +597,11 @@
         <di:waypoint x="885" y="360" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
-        <di:waypoint x="935" y="360" />
-        <di:waypoint x="1045" y="360" />
+        <di:waypoint x="920" y="375" />
+        <di:waypoint x="920" y="450" />
+        <di:waypoint x="1245" y="450" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="975" y="374" width="23" height="14" />
+          <dc:Bounds x="938" y="409" width="23" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_InfoRequired_di" bpmnElement="Flow_InfoRequired">
@@ -630,30 +614,13 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_CorrectionRequired_di" bpmnElement="Flow_CorrectionRequired">
         <di:waypoint x="900" y="375" />
-        <di:waypoint x="900" y="460" />
-        <di:waypoint x="960" y="460" />
+        <di:waypoint x="900" y="490" />
+        <di:waypoint x="960" y="490" />
         <di:waypoint x="960" y="730" />
         <di:waypoint x="610" y="730" />
         <di:waypoint x="610" y="680" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="736" y="712" width="73" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ComplianceNo_di" bpmnElement="Flow_ComplianceNo">
-        <di:waypoint x="2125" y="240" />
-        <di:waypoint x="2480" y="240" />
-        <di:waypoint x="2480" y="360" />
-        <di:waypoint x="2555" y="360" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2292" y="222" width="23" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_CompliancePassed_di" bpmnElement="Flow_CompliancePassed">
-        <di:waypoint x="2255" y="450" />
-        <di:waypoint x="2580" y="450" />
-        <di:waypoint x="2580" y="385" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2264" y="453" width="12" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_ERPStart_di" bpmnElement="Flow_ERPStart">
@@ -729,56 +696,6 @@
         <di:waypoint x="1270" y="258" />
         <di:waypoint x="1270" y="425" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ToGRPC_di" bpmnElement="Flow_ToGRPC">
-        <di:waypoint x="1155" y="360" />
-        <di:waypoint x="1470" y="360" />
-        <di:waypoint x="1470" y="240" />
-        <di:waypoint x="1510" y="240" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_GRPCToMerge_di" bpmnElement="Flow_GRPCToMerge">
-        <di:waypoint x="1610" y="240" />
-        <di:waypoint x="1755" y="240" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_FallbackToMerge_di" bpmnElement="Flow_FallbackToMerge">
-        <di:waypoint x="1610" y="640" />
-        <di:waypoint x="1780" y="640" />
-        <di:waypoint x="1780" y="265" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_GRPCToCompliance_di" bpmnElement="Flow_GRPCToCompliance">
-        <di:waypoint x="1805" y="240" />
-        <di:waypoint x="1930" y="240" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_GRPCErrorToFallback_di" bpmnElement="Flow_GRPCErrorToFallback">
-        <di:waypoint x="1560" y="298" />
-        <di:waypoint x="1560" y="600" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ComplianceRulesToGateway_di" bpmnElement="Flow_ComplianceRulesToGateway">
-        <di:waypoint x="2030" y="240" />
-        <di:waypoint x="2075" y="240" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ComplianceYes_di" bpmnElement="Flow_ComplianceYes">
-        <di:waypoint x="2100" y="265" />
-        <di:waypoint x="2100" y="600" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2079" y="559" width="12" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ComplianceCheckToGateway_di" bpmnElement="Flow_ComplianceCheckToGateway">
-        <di:waypoint x="2150" y="640" />
-        <di:waypoint x="2170" y="640" />
-        <di:waypoint x="2170" y="450" />
-        <di:waypoint x="2205" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ComplianceFailed_di" bpmnElement="Flow_ComplianceFailed">
-        <di:waypoint x="2230" y="475" />
-        <di:waypoint x="2230" y="730" />
-        <di:waypoint x="1480" y="730" />
-        <di:waypoint x="1480" y="450" />
-        <di:waypoint x="1295" y="450" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2248" y="492" width="23" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_PortalToReview_di" bpmnElement="Flow_PortalToReview">
         <di:waypoint x="298" y="200" />
         <di:waypoint x="700" y="200" />
@@ -800,7 +717,84 @@
           <dc:Bounds x="539" y="271" width="12" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-
+      <bpmndi:BPMNEdge id="Flow_ComplianceNo_di" bpmnElement="Flow_ComplianceNo">
+        <di:waypoint x="2125" y="240" />
+        <di:waypoint x="2480" y="240" />
+        <di:waypoint x="2480" y="360" />
+        <di:waypoint x="2555" y="360" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2292" y="222" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ComplianceRulesToGateway_di" bpmnElement="Flow_ComplianceRulesToGateway">
+        <di:waypoint x="2030" y="240" />
+        <di:waypoint x="2075" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GRPCToCompliance_di" bpmnElement="Flow_GRPCToCompliance">
+        <di:waypoint x="1805" y="240" />
+        <di:waypoint x="1930" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GRPCToMerge_di" bpmnElement="Flow_GRPCToMerge">
+        <di:waypoint x="1610" y="240" />
+        <di:waypoint x="1755" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FallbackToMerge_di" bpmnElement="Flow_FallbackToMerge">
+        <di:waypoint x="1610" y="640" />
+        <di:waypoint x="1780" y="640" />
+        <di:waypoint x="1780" y="265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GRPCErrorToFallback_di" bpmnElement="Flow_GRPCErrorToFallback">
+        <di:waypoint x="1560" y="298" />
+        <di:waypoint x="1560" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ComplianceYes_di" bpmnElement="Flow_ComplianceYes">
+        <di:waypoint x="2100" y="265" />
+        <di:waypoint x="2100" y="600" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2079" y="559" width="12" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CompliancePassed_di" bpmnElement="Flow_CompliancePassed">
+        <di:waypoint x="2255" y="450" />
+        <di:waypoint x="2580" y="450" />
+        <di:waypoint x="2580" y="385" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2284" y="453" width="12" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ComplianceCheckToGateway_di" bpmnElement="Flow_ComplianceCheckToGateway">
+        <di:waypoint x="2150" y="640" />
+        <di:waypoint x="2170" y="640" />
+        <di:waypoint x="2170" y="450" />
+        <di:waypoint x="2205" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ComplianceFailed_di" bpmnElement="Flow_ComplianceFailed">
+        <di:waypoint x="2230" y="475" />
+        <di:waypoint x="2230" y="730" />
+        <di:waypoint x="1480" y="730" />
+        <di:waypoint x="1480" y="450" />
+        <di:waypoint x="1295" y="450" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2248" y="492" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ManagerToEnd_di" bpmnElement="Flow_ManagerToEnd">
+        <di:waypoint x="1320" y="640" />
+        <di:waypoint x="1352" y="640" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_MergeToManager_di" bpmnElement="Flow_MergeToManager">
+        <di:waypoint x="1270" y="475" />
+        <di:waypoint x="1270" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0p5e2tq_di" bpmnElement="Flow_0p5e2tq">
+        <di:waypoint x="940" y="360" />
+        <di:waypoint x="1390" y="360" />
+        <di:waypoint x="1390" y="240" />
+        <di:waypoint x="1510" y="240" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="954" y="342" width="12" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="TextAnnotation_gRPC_di" bpmnElement="TextAnnotation_gRPC">
         <dc:Bounds x="1520" y="150" width="80" height="30" />
       </bpmndi:BPMNShape>

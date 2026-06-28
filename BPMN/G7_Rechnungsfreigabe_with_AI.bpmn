@@ -30,13 +30,9 @@
         <bpmn:flowNodeRef>Gateway_RuckfrageWait</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_Zeitueberschritten</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_Abgeschlossen</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Boundary_Error_Archive</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Boundary_Error_RabbitMQ</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Boundary_Error_UiPath</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>StartEvent_Portal</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>StartEvent_Email</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_AiExtraction</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Boundary_Error_AI</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_Plausibilitaet</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_MergeBeforeReview</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_MetadatenSpeichern</bpmn:flowNodeRef>
@@ -44,20 +40,24 @@
         <bpmn:flowNodeRef>Task_ComplianceRules</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_ComplianceErforderlich</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_AntwortErhalten</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Boundary_Error_gRPC</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Gateway_MergeBeforeManager</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_MergeBeforegRPC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_MergeBeforeManager</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_ComplianceBestanden</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_gRPC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_AI</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_UiPath</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_RabbitMQ</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_Archive</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Sachbearbeiter" name="Sachbearbeiter">
         <bpmn:flowNodeRef>Task_MetadatenErfassen</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_ManuelleZahlung</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_ManuelleArchivierung</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_RechnungPruefen</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_ComplianceCheck</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_ManuellSpeichern</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_ERPErfassung</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Task_VorgangPruefenManager</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ComplianceCheck</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ManuellSpeichern</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_VorgangAbgeschlossenManager</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
@@ -77,11 +77,6 @@
       <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
       <bpmn:outgoing>Flow_InfoRequired</bpmn:outgoing>
       <bpmn:outgoing>Flow_CorrectionRequired</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:exclusiveGateway id="Gateway_MergeBeforeERP" name="Merge ERP">
-      <bpmn:incoming>Flow_ComplianceNo</bpmn:incoming>
-      <bpmn:incoming>Flow_CompliancePassed</bpmn:incoming>
-      <bpmn:outgoing>Flow_ERPStart</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Task_UiPathERPErfassung" name="Rechnung im ERP per Bot erfassen">
       <bpmn:extensionElements>
@@ -137,8 +132,6 @@
       <bpmn:incoming>Flow_ManualArchivToMerge</bpmn:incoming>
       <bpmn:outgoing>Flow_ArchivMergeToEnd</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_MergeToManager" sourceRef="Gateway_MergeBeforeManager" targetRef="Task_VorgangPruefenManager" />
-    <bpmn:sequenceFlow id="Flow_ManagerToEnd" sourceRef="Task_VorgangPruefenManager" targetRef="EndEvent_VorgangAbgeschlossenManager" />
     <bpmn:serviceTask id="Task_RueckfrageSenden" name="Rückfrage an Lieferanten senden">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="send-information-request" />
@@ -191,16 +184,12 @@
     <bpmn:sequenceFlow id="Flow_AntwortToMerge" sourceRef="Event_AntwortErhalten" targetRef="Gateway_MergeBeforeReview" />
     <bpmn:sequenceFlow id="Flow_MergeToReviewTask" sourceRef="Gateway_MergeBeforeReview" targetRef="Task_RechnungPruefen" />
     <bpmn:sequenceFlow id="Flow_ReviewToGateway" sourceRef="Task_RechnungPruefen" targetRef="Gateway_Freigabeentscheidung" />
-    <bpmn:sequenceFlow id="Flow_Rejected" name="Nein" sourceRef="Gateway_Freigabeentscheidung" targetRef="Gateway_MergeBeforegRPC" />
+    <bpmn:sequenceFlow id="Flow_Rejected" name="Nein" sourceRef="Gateway_Freigabeentscheidung" targetRef="Gateway_MergeBeforeManager" />
     <bpmn:sequenceFlow id="Flow_InfoRequired" name="Rückfrage" sourceRef="Gateway_Freigabeentscheidung" targetRef="Task_RueckfrageSenden">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(approvalDecision = "INFO_REQUIRED")</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_CorrectionRequired" name="Korrektur nötig" sourceRef="Gateway_Freigabeentscheidung" targetRef="Task_MetadatenErfassen">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(approvalDecision = "CORRECTION_REQUIRED")</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_ComplianceNo" name="Nein" sourceRef="Gateway_ComplianceErforderlich" targetRef="Gateway_MergeBeforeERP" />
-    <bpmn:sequenceFlow id="Flow_CompliancePassed" name="Ja" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeERP">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(complianceDecision = "PASSED")</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_ERPStart" sourceRef="Gateway_MergeBeforeERP" targetRef="Task_UiPathERPErfassung" />
     <bpmn:sequenceFlow id="Flow_BotSuccessToMerge" sourceRef="Task_UiPathERPErfassung" targetRef="Gateway_MergeAfterERP" />
@@ -219,17 +208,6 @@
     <bpmn:sequenceFlow id="Flow_ToAntwortErhalten" sourceRef="Gateway_RuckfrageWait" targetRef="Event_AntwortErhalten" />
     <bpmn:sequenceFlow id="Flow_ToZeitueberschritten" sourceRef="Gateway_RuckfrageWait" targetRef="Event_Zeitueberschritten" />
     <bpmn:sequenceFlow id="Flow_TimerToAbbruch" sourceRef="Event_Zeitueberschritten" targetRef="Gateway_MergeBeforeManager" />
-    <bpmn:sequenceFlow id="Flow_ToGRPC" sourceRef="Gateway_MergeBeforegRPC" targetRef="Task_MetadatenSpeichern" />
-    <bpmn:sequenceFlow id="Flow_GRPCToMerge" sourceRef="Task_MetadatenSpeichern" targetRef="Gateway_MergeAfterGRPC" />
-    <bpmn:sequenceFlow id="Flow_FallbackToMerge" sourceRef="Task_ManuellSpeichern" targetRef="Gateway_MergeAfterGRPC" />
-    <bpmn:sequenceFlow id="Flow_GRPCToCompliance" sourceRef="Gateway_MergeAfterGRPC" targetRef="Task_ComplianceRules" />
-    <bpmn:sequenceFlow id="Flow_GRPCErrorToFallback" sourceRef="Boundary_Error_gRPC" targetRef="Task_ManuellSpeichern" />
-    <bpmn:sequenceFlow id="Flow_ComplianceRulesToGateway" sourceRef="Task_ComplianceRules" targetRef="Gateway_ComplianceErforderlich" />
-    <bpmn:sequenceFlow id="Flow_ComplianceYes" name="Ja" sourceRef="Gateway_ComplianceErforderlich" targetRef="Task_ComplianceCheck">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(complianceRequired = true or dmnComplianceRequired = true)</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_ComplianceCheckToGateway" sourceRef="Task_ComplianceCheck" targetRef="Gateway_ComplianceBestanden" />
-    <bpmn:sequenceFlow id="Flow_ComplianceFailed" name="Nein" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeManager" />
     <bpmn:startEvent id="StartEvent_Portal" name="Rechnungs-eingang (Portal)">
       <bpmn:extensionElements>
         <zeebe:formDefinition formId="Form_PortalStart" />
@@ -269,57 +247,11 @@
     <bpmn:sequenceFlow id="Flow_PlausibilityYes" name="Ja" sourceRef="Gateway_Plausibilitaet" targetRef="Gateway_MergeBeforeReview">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(aiPlausibilityStatus = "VALID")</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:serviceTask id="Task_MetadatenSpeichern" name="Metadaten per gRPC speichern">
-      <bpmn:extensionElements>
-        <zeebe:taskDefinition type="save-invoice-metadata" retries="3" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_ToGRPC</bpmn:incoming>
-      <bpmn:outgoing>Flow_GRPCToMerge</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_MergeAfterGRPC" name="Merge gRPC">
-      <bpmn:incoming>Flow_GRPCToMerge</bpmn:incoming>
-      <bpmn:incoming>Flow_FallbackToMerge</bpmn:incoming>
-      <bpmn:outgoing>Flow_GRPCToCompliance</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:businessRuleTask id="Task_ComplianceRules" name="Compliance-Regeln auswerten">
-      <bpmn:extensionElements>
-        <zeebe:calledDecision decisionId="Decision_ComplianceCheck" resultVariable="dmnComplianceRequired" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_GRPCToCompliance</bpmn:incoming>
-      <bpmn:outgoing>Flow_ComplianceRulesToGateway</bpmn:outgoing>
-    </bpmn:businessRuleTask>
-    <bpmn:userTask id="Task_ComplianceCheck" name="Compliance Check durchführen">
-      <bpmn:extensionElements>
-        <zeebe:formDefinition formId="Form_ComplianceCheck" />
-        <zeebe:assignmentDefinition candidateGroups="sachbearbeiter" />
-        <zeebe:userTask />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_ComplianceYes</bpmn:incoming>
-      <bpmn:outgoing>Flow_ComplianceCheckToGateway</bpmn:outgoing>
-    </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_ComplianceErforderlich" name="Compliance erforderlich?" default="Flow_ComplianceNo">
-      <bpmn:incoming>Flow_ComplianceRulesToGateway</bpmn:incoming>
-      <bpmn:outgoing>Flow_ComplianceYes</bpmn:outgoing>
-      <bpmn:outgoing>Flow_ComplianceNo</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
     <bpmn:intermediateCatchEvent id="Event_AntwortErhalten" name="Antwort erhalten">
       <bpmn:incoming>Flow_ToAntwortErhalten</bpmn:incoming>
       <bpmn:outgoing>Flow_AntwortToMerge</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_Antwort" messageRef="Message_Antwort" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:boundaryEvent id="Boundary_Error_gRPC" name="gRPC Fehler" attachedToRef="Task_MetadatenSpeichern">
-      <bpmn:outgoing>Flow_GRPCErrorToFallback</bpmn:outgoing>
-      <bpmn:errorEventDefinition errorRef="Error_gRPC_ID" zeebe:errorMessageVariable="errorMessage" />
-    </bpmn:boundaryEvent>
-    <bpmn:userTask id="Task_ManuellSpeichern" name="Metadaten manuell speichern">
-      <bpmn:extensionElements>
-        <zeebe:formDefinition formId="Form_ManuelleSpeicherung" />
-        <zeebe:assignmentDefinition candidateGroups="sachbearbeiter" />
-        <zeebe:userTask />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_GRPCErrorToFallback</bpmn:incoming>
-      <bpmn:outgoing>Flow_FallbackToMerge</bpmn:outgoing>
-    </bpmn:userTask>
     <bpmn:userTask id="Task_ERPErfassung" name="Rechnung im ERP erfassen">
       <bpmn:extensionElements>
         <zeebe:formDefinition formId="Form_ERPBestaetigung" />
@@ -329,6 +261,93 @@
       <bpmn:incoming>Flow_BotErrorToManual</bpmn:incoming>
       <bpmn:outgoing>Flow_ManualERPToMerge</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_ComplianceNo" name="Nein" sourceRef="Gateway_ComplianceErforderlich" targetRef="Gateway_MergeBeforeERP" />
+    <bpmn:sequenceFlow id="Flow_ComplianceRulesToGateway" sourceRef="Task_ComplianceRules" targetRef="Gateway_ComplianceErforderlich" />
+    <bpmn:sequenceFlow id="Flow_GRPCToCompliance" sourceRef="Gateway_MergeAfterGRPC" targetRef="Task_ComplianceRules" />
+    <bpmn:sequenceFlow id="Flow_GRPCToMerge" sourceRef="Task_MetadatenSpeichern" targetRef="Gateway_MergeAfterGRPC" />
+    <bpmn:sequenceFlow id="Flow_ToGRPC" sourceRef="Gateway_MergeBeforegRPC" targetRef="Task_MetadatenSpeichern" />
+    <bpmn:sequenceFlow id="Flow_FallbackToMerge" sourceRef="Task_ManuellSpeichern" targetRef="Gateway_MergeAfterGRPC" />
+    <bpmn:sequenceFlow id="Flow_GRPCErrorToFallback" sourceRef="Boundary_Error_gRPC" targetRef="Task_ManuellSpeichern" />
+    <bpmn:sequenceFlow id="Flow_ComplianceYes" name="Ja" sourceRef="Gateway_ComplianceErforderlich" targetRef="Task_ComplianceCheck">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(complianceRequired = true or dmnComplianceRequired = true)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_CompliancePassed" name="Ja" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeERP">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(complianceDecision = "PASSED")</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:boundaryEvent id="Boundary_Error_gRPC" name="gRPC Fehler" attachedToRef="Task_MetadatenSpeichern">
+      <bpmn:outgoing>Flow_GRPCErrorToFallback</bpmn:outgoing>
+      <bpmn:errorEventDefinition errorRef="Error_gRPC_ID" zeebe:errorMessageVariable="errorMessage" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="Gateway_MergeBeforeERP" name="Merge ERP">
+      <bpmn:incoming>Flow_ComplianceNo</bpmn:incoming>
+      <bpmn:incoming>Flow_CompliancePassed</bpmn:incoming>
+      <bpmn:outgoing>Flow_ERPStart</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_ComplianceErforderlich" name="Compliance erforderlich?" default="Flow_ComplianceNo">
+      <bpmn:incoming>Flow_ComplianceRulesToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_ComplianceYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ComplianceNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:businessRuleTask id="Task_ComplianceRules" name="Compliance-Regeln auswerten">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="Decision_ComplianceCheck" resultVariable="dmnComplianceRequired" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_GRPCToCompliance</bpmn:incoming>
+      <bpmn:outgoing>Flow_ComplianceRulesToGateway</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="Gateway_MergeAfterGRPC" name="Merge gRPC">
+      <bpmn:incoming>Flow_GRPCToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_FallbackToMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_GRPCToCompliance</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_MetadatenSpeichern" name="Metadaten per gRPC speichern">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="save-invoice-metadata" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ToGRPC</bpmn:incoming>
+      <bpmn:outgoing>Flow_GRPCToMerge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_MergeBeforegRPC" name="Merge vor gRPC">
+      <bpmn:incoming>Flow_Approved</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToGRPC</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_ComplianceCheckToGateway" sourceRef="Task_ComplianceCheck" targetRef="Gateway_ComplianceBestanden" />
+    <bpmn:sequenceFlow id="Flow_ComplianceFailed" name="Nein" sourceRef="Gateway_ComplianceBestanden" targetRef="Gateway_MergeBeforeManager" />
+    <bpmn:sequenceFlow id="Flow_ManagerToEnd" sourceRef="Task_VorgangPruefenManager" targetRef="EndEvent_VorgangAbgeschlossenManager" />
+    <bpmn:sequenceFlow id="Flow_MergeToManager" sourceRef="Gateway_MergeBeforeManager" targetRef="Task_VorgangPruefenManager" />
+    <bpmn:endEvent id="EndEvent_VorgangAbgeschlossenManager" name="Vorgang durch Manager abgeschlossen">
+      <bpmn:incoming>Flow_ManagerToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_ManuellSpeichern" name="Metadaten manuell speichern">
+      <bpmn:extensionElements>
+        <zeebe:formDefinition formId="Form_ManuelleSpeicherung" />
+        <zeebe:assignmentDefinition candidateGroups="sachbearbeiter" />
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_GRPCErrorToFallback</bpmn:incoming>
+      <bpmn:outgoing>Flow_FallbackToMerge</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_ComplianceCheck" name="Compliance Check durchführen">
+      <bpmn:extensionElements>
+        <zeebe:formDefinition formId="Form_ComplianceCheck" />
+        <zeebe:assignmentDefinition candidateGroups="sachbearbeiter" />
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ComplianceYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_ComplianceCheckToGateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_ComplianceBestanden" name="Compliance bestanden?" default="Flow_ComplianceFailed">
+      <bpmn:incoming>Flow_ComplianceCheckToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_CompliancePassed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ComplianceFailed</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_MergeBeforeManager" name="Merge Manager">
+      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+      <bpmn:incoming>Flow_ComplianceFailed</bpmn:incoming>
+      <bpmn:incoming>Flow_TimerToAbbruch</bpmn:incoming>
+      <bpmn:outgoing>Flow_MergeToManager</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
     <bpmn:userTask id="Task_VorgangPruefenManager" name="Vorgang prüfen (Manager)">
       <bpmn:extensionElements>
         <zeebe:formDefinition formId="Form_ManagerPruefung" />
@@ -338,26 +357,6 @@
       <bpmn:incoming>Flow_MergeToManager</bpmn:incoming>
       <bpmn:outgoing>Flow_ManagerToEnd</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:endEvent id="EndEvent_VorgangAbgeschlossenManager" name="Vorgang durch Manager abgeschlossen">
-      <bpmn:incoming>Flow_ManagerToEnd</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1n40m7h" sourceRef="Gateway_MergeBeforegRPC" targetRef="Gateway_MergeBeforeManager" />
-    <bpmn:exclusiveGateway id="Gateway_MergeBeforeManager" name="Merge Manager">
-      <bpmn:incoming>Flow_ComplianceFailed</bpmn:incoming>
-      <bpmn:incoming>Flow_TimerToAbbruch</bpmn:incoming>
-      <bpmn:incoming>Flow_1n40m7h</bpmn:incoming>
-      <bpmn:outgoing>Flow_MergeToManager</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:exclusiveGateway id="Gateway_MergeBeforegRPC" name="Merge vor gRPC">
-      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
-      <bpmn:outgoing>Flow_ToGRPC</bpmn:outgoing>
-      <bpmn:outgoing>Flow_1n40m7h</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:exclusiveGateway id="Gateway_ComplianceBestanden" name="Compliance bestanden?" default="Flow_ComplianceFailed">
-      <bpmn:incoming>Flow_ComplianceCheckToGateway</bpmn:incoming>
-      <bpmn:outgoing>Flow_CompliancePassed</bpmn:outgoing>
-      <bpmn:outgoing>Flow_ComplianceFailed</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
   </bpmn:process>
   <bpmn:error id="Error_gRPC_ID" name="gRPC Error" errorCode="ERR_GRPC" />
   <bpmn:error id="Error_RabbitMQ_ID" name="RabbitMQ Error" errorCode="ERR_RABBITMQ" />
@@ -393,7 +392,7 @@
       <bpmndi:BPMNShape id="Gateway_MergeBeforeERP_di" bpmnElement="Gateway_MergeBeforeERP" isMarkerVisible="true">
         <dc:Bounds x="2555" y="335" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2551.5" y="311" width="57" height="14" />
+          <dc:Bounds x="2552" y="311" width="57" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_UiPathERPErfassung_di" bpmnElement="Task_UiPathERPErfassung">
@@ -499,7 +498,7 @@
       <bpmndi:BPMNShape id="Gateway_ComplianceErforderlich_di" bpmnElement="Gateway_ComplianceErforderlich" isMarkerVisible="true">
         <dc:Bounds x="2075" y="215" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2069" y="177.5" width="62" height="27" />
+          <dc:Bounds x="2069" y="178" width="62" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_AntwortErhalten_di" bpmnElement="Event_AntwortErhalten">
@@ -616,9 +615,9 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
         <di:waypoint x="935" y="360" />
-        <di:waypoint x="1105" y="360" />
+        <di:waypoint x="1045" y="360" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1007" y="374" width="23" height="14" />
+          <dc:Bounds x="975" y="374" width="23" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_InfoRequired_di" bpmnElement="Flow_InfoRequired">
@@ -766,14 +765,18 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_ComplianceCheckToGateway_di" bpmnElement="Flow_ComplianceCheckToGateway">
         <di:waypoint x="2150" y="640" />
-        <di:waypoint x="2230" y="640" />
-        <di:waypoint x="2230" y="475" />
+        <di:waypoint x="2170" y="640" />
+        <di:waypoint x="2170" y="450" />
+        <di:waypoint x="2205" y="450" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_ComplianceFailed_di" bpmnElement="Flow_ComplianceFailed">
-        <di:waypoint x="2205" y="450" />
+        <di:waypoint x="2230" y="475" />
+        <di:waypoint x="2230" y="730" />
+        <di:waypoint x="1480" y="730" />
+        <di:waypoint x="1480" y="450" />
         <di:waypoint x="1295" y="450" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2138" y="423" width="23" height="14" />
+          <dc:Bounds x="2248" y="492" width="23" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_PortalToReview_di" bpmnElement="Flow_PortalToReview">
@@ -797,11 +800,7 @@
           <dc:Bounds x="539" y="271" width="12" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1n40m7h_di" bpmnElement="Flow_1n40m7h">
-        <di:waypoint x="1130" y="385" />
-        <di:waypoint x="1130" y="450" />
-        <di:waypoint x="1245" y="450" />
-      </bpmndi:BPMNEdge>
+
       <bpmndi:BPMNShape id="TextAnnotation_gRPC_di" bpmnElement="TextAnnotation_gRPC">
         <dc:Bounds x="1520" y="150" width="80" height="30" />
       </bpmndi:BPMNShape>

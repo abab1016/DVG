@@ -1,17 +1,12 @@
 {
-  "executionPlatform": "Camunda Cloud",
-  "executionPlatformVersion": "8.6.0",
-  "exporter": {
-    "name": "Camunda Web Modeler",
-    "version": "1d3193f"
-  },
-  "schemaVersion": 19,
-  "id": "Form_PortalStart",
   "components": [
     {
       "text": "### Rechnungsportal - Neue Rechnung einreichen\nBitte füllen Sie das Online-Formular vollständig aus. Die Daten werden automatisch verarbeitet.",
       "type": "text",
-      "id": "Field_Header"
+      "id": "Field_Header",
+      "layout": {
+        "row": "Row_1xoe5je"
+      }
     },
     {
       "label": "Rechnungs-ID (Eindeutig) *",
@@ -182,14 +177,6 @@
     },
     {
       "label": "Rechnungspositionen",
-      "type": "dynamiclist",
-      "layout": {
-        "row": "Row_8"
-      },
-      "id": "Field_invoiceItems",
-      "isReorderable": true,
-      "allowAdd": true,
-      "allowRemove": true,
       "components": [
         {
           "label": "Beschreibung",
@@ -238,8 +225,28 @@
           "key": "totalPrice"
         }
       ],
+      "showOutline": true,
+      "isRepeating": true,
+      "allowAddRemove": true,
+      "defaultRepetitions": 1,
+      "type": "dynamiclist",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "isReorderable": true,
+      "allowAdd": true,
+      "allowRemove": true,
       "path": "invoiceItems"
     }
   ],
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "schemaVersion": 19,
+  "id": "Form_PortalStart",
   "type": "default"
 }

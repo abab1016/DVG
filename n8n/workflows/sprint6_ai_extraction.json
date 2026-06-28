@@ -13,6 +13,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
+      "webhookId": "53c57e23-ae73-4989-81b1-8d3811b70341",
       "position": [100, 300]
     },
     {

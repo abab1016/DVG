@@ -1,11 +1,14 @@
-"""pyzeebe-Worker fuer den Sprint-4-Workflow.
+"""pyzeebe-Worker fuer den DVG-Workflow (Sprint 4-6).
 
 Verbindet sich mit Zeebe (Camunda 8) und abonniert alle Service-Task-Job-Types:
+  - run-ai-extraction        n8n/Gemini-Extraktion ausfuehren (Sprint 6)
+  - apply-human-review       korrigierte Human-Review-Daten zusammenfuehren (Sprint 6, KAN-457)
   - extract-pdf-metadata     Rechnungs-PDF automatisch auslesen
   - save-invoice-metadata    gRPC-Metadaten speichern
   - send-payment-order       RabbitMQ-Zahlungsauftrag senden
   - archive-invoice          Prozessabschluss archivieren
   - send-information-request Rueckfrage an Lieferanten "senden"
+  - uipath-erp-erfassung     ERP-Erfassung per RPA-Bot
 """
 import asyncio
 import logging
@@ -24,6 +27,7 @@ from handlers.payment_handler import registriere_payment_handler
 from handlers.pdf_handler import registriere_pdf_handler
 from handlers.uipath_handler import registriere_uipath_handler
 from handlers.ai_extraction_handler import registriere_ai_extraction_handler
+from handlers.human_review_handler import registriere_human_review_handler
 
 ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
@@ -195,13 +199,14 @@ async def main() -> None:
     client = ZeebeClient(kanal)
 
     # Registriere alle Job-Handler
+    registriere_ai_extraction_handler(worker)
+    registriere_human_review_handler(worker)
     registriere_pdf_handler(worker)
     registriere_grpc_handler(worker)
     registriere_payment_handler(worker)
     registriere_archive_handler(worker)
     registriere_info_request_handler(worker)
     registriere_uipath_handler(worker)
-    registriere_ai_extraction_handler(worker)
 
     # Startet das REST-Gateway für Postman
     loop = asyncio.get_running_loop()
@@ -209,8 +214,8 @@ async def main() -> None:
 
     logger.info(
         "Worker bereit, abonniere Job-Types: "
-        "run-ai-extraction, extract-pdf-metadata, save-invoice-metadata, send-payment-order, "
-        "archive-invoice, send-information-request, uipath-erp-erfassung"
+        "run-ai-extraction, apply-human-review, extract-pdf-metadata, save-invoice-metadata, "
+        "send-payment-order, archive-invoice, send-information-request, uipath-erp-erfassung"
     )
     await worker.work()
 

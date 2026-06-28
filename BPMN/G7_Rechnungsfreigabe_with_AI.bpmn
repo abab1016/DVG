@@ -47,6 +47,7 @@
         <bpmn:flowNodeRef>Boundary_Error_UiPath</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Boundary_Error_RabbitMQ</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Boundary_Error_Archive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ApplyHumanReview</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Sachbearbeiter" name="Sachbearbeiter">
         <bpmn:flowNodeRef>Task_MetadatenErfassen</bpmn:flowNodeRef>
@@ -72,7 +73,7 @@
       <bpmn:outgoing>Flow_MetaToReview</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_Freigabeentscheidung" name="Freigabeent-scheidung?" default="Flow_Rejected">
-      <bpmn:incoming>Flow_ReviewToGateway</bpmn:incoming>
+      <bpmn:incoming>Flow_ApplyHumanReviewToGateway</bpmn:incoming>
       <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
       <bpmn:outgoing>Flow_InfoRequired</bpmn:outgoing>
       <bpmn:outgoing>Flow_CorrectionRequired</bpmn:outgoing>
@@ -159,8 +160,15 @@
         <zeebe:userTask />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_MergeToReviewTask</bpmn:incoming>
-      <bpmn:outgoing>Flow_ReviewToGateway</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ReviewToApplyHumanReview</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:serviceTask id="Task_ApplyHumanReview" name="Human-Review-Daten anwenden">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="apply-human-review" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReviewToApplyHumanReview</bpmn:incoming>
+      <bpmn:outgoing>Flow_ApplyHumanReviewToGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
     <bpmn:endEvent id="EndEvent_Abgeschlossen" name="Rechnung abgeschlossen">
       <bpmn:incoming>Flow_ArchivMergeToEnd</bpmn:incoming>
     </bpmn:endEvent>
@@ -183,7 +191,8 @@
     <bpmn:sequenceFlow id="Flow_MetaToReview" sourceRef="Task_MetadatenErfassen" targetRef="Gateway_MergeBeforeReview" />
     <bpmn:sequenceFlow id="Flow_AntwortToMerge" sourceRef="Event_AntwortErhalten" targetRef="Gateway_MergeBeforeReview" />
     <bpmn:sequenceFlow id="Flow_MergeToReviewTask" sourceRef="Gateway_MergeBeforeReview" targetRef="Task_RechnungPruefen" />
-    <bpmn:sequenceFlow id="Flow_ReviewToGateway" sourceRef="Task_RechnungPruefen" targetRef="Gateway_Freigabeentscheidung" />
+    <bpmn:sequenceFlow id="Flow_ReviewToApplyHumanReview" sourceRef="Task_RechnungPruefen" targetRef="Task_ApplyHumanReview" />
+    <bpmn:sequenceFlow id="Flow_ApplyHumanReviewToGateway" sourceRef="Task_ApplyHumanReview" targetRef="Gateway_Freigabeentscheidung" />
     <bpmn:sequenceFlow id="Flow_Rejected" name="Nein" sourceRef="Gateway_Freigabeentscheidung" targetRef="Gateway_MergeBeforeManager" />
     <bpmn:sequenceFlow id="Flow_InfoRequired" name="Rückfrage" sourceRef="Gateway_Freigabeentscheidung" targetRef="Task_RueckfrageSenden">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=(approvalDecision = "INFO_REQUIRED")</bpmn:conditionExpression>
@@ -438,6 +447,9 @@
         <dc:Bounds x="830" y="600" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ApplyHumanReview_di" bpmnElement="Task_ApplyHumanReview">
+        <dc:Bounds x="810" y="430" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_Abgeschlossen_di" bpmnElement="EndEvent_Abgeschlossen">
         <dc:Bounds x="3542" y="342" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -591,10 +603,14 @@
         <di:waypoint x="790" y="640" />
         <di:waypoint x="830" y="640" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ReviewToGateway_di" bpmnElement="Flow_ReviewToGateway">
-        <di:waypoint x="860" y="600" />
-        <di:waypoint x="860" y="360" />
-        <di:waypoint x="885" y="360" />
+      <bpmndi:BPMNEdge id="Flow_ReviewToApplyHumanReview_di" bpmnElement="Flow_ReviewToApplyHumanReview">
+        <di:waypoint x="880" y="600" />
+        <di:waypoint x="880" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ApplyHumanReviewToGateway_di" bpmnElement="Flow_ApplyHumanReviewToGateway">
+        <di:waypoint x="860" y="430" />
+        <di:waypoint x="910" y="430" />
+        <di:waypoint x="910" y="385" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
         <di:waypoint x="920" y="375" />

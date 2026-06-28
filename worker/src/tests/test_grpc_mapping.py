@@ -50,10 +50,23 @@ def test_ausgabe_enthaelt_nur_proto_feldnamen():
 
 
 def test_kann_echtes_proto_konstruieren():
-    """Wenn die Proto-Stubs generiert sind: echte Konstruktion darf nicht crashen."""
+    """Wenn die Proto-Stubs generiert sind: echte Konstruktion darf nicht crashen.
+
+    Achtung: `items` ist ein repeated-Message-Feld und kann NICHT per **kwargs
+    als Liste von Dicts übergeben werden. Muss wie in grpc_client.py separat
+    mit .items.add() befüllt werden.
+    """
     pb2 = pytest.importorskip("invoice_pb2")
     rechnung = variablen_zu_rechnung(vollstaendige_variablen())
+    items = rechnung.pop("items", [])
     nachricht = pb2.Rechnungsmetadaten(**rechnung)
+    for item in items:
+        nachricht.items.add(
+            description=item.get("description", ""),
+            quantity=float(item.get("quantity", 0.0)),
+            unitPrice=float(item.get("unitPrice", 0.0)),
+            totalPrice=float(item.get("totalPrice", 0.0)),
+        )
     assert nachricht.invoiceId == "INV-2026-099"
 
 

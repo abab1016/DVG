@@ -4,8 +4,8 @@ Aufgaben (Subtask 4.7, KAN-269):
   - Schreibt eine Abschluss-JSON-Datei in den Ordner Rechnungsdaten/
   - Dateinhalt: Rechnungs-ID, Abschlussstatus, Zeitstempel
   - Fehler klassifizieren:
-      * Dateisystem-Fehler (OSError) → Exception → Zeebe-Retry
-      * Daten-Fehler                    → BusinessError
+      * Alle Fehler (OSError, sonstige) → BusinessError → Incident in Operate
+        (Der Task hat keine BPMN Error-Boundary; Incident ist das korrekte Verhalten)
 """
 import asyncio
 import json

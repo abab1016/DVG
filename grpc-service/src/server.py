@@ -23,17 +23,19 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
             context.set_details("Rechnungsadresse darf nicht leer sein.")
             return invoice_pb2.SpeicherAntwort()
 
-        # Duplikatsprüfung für Rechnung (Rechnungs-ID und Lieferant)
+        # Duplikatsprüfung: gleiche Rechnungsadresse = doppelte Einreichung
         try:
             for pfad in SPEICHER.glob("*.json"):
                 try:
                     inhalt = json.loads(pfad.read_text(encoding="utf-8"))
-                    is_same_id = inhalt.get("invoiceId", "").strip() == request.invoiceId.strip()
-                    is_same_supplier = inhalt.get("supplierName", "").strip() == request.supplierName.strip()
-                    
-                    if is_same_id and is_same_supplier:
+                    is_same_address = inhalt.get("billingAddress", "").strip() == request.billingAddress.strip()
+
+                    if is_same_address and request.billingAddress.strip():
                         context.set_code(grpc.StatusCode.ALREADY_EXISTS)
-                        context.set_details(f"Duplikat erkannt: Rechnung {request.invoiceId} vom Lieferanten {request.supplierName} existiert bereits.")
+                        context.set_details(
+                            f"Rechnung doppelt eingereicht: Rechnungsadresse '{request.billingAddress}' "
+                            f"existiert bereits (Rechnung {inhalt.get('invoiceId', '?')})."
+                        )
                         return invoice_pb2.SpeicherAntwort()
                 except Exception:
                     pass

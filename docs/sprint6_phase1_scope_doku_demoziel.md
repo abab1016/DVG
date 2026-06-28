@@ -181,7 +181,7 @@ Diese Phase legt den Rahmen für die weitere Umsetzung fest.
 
 ### 4.1 Ergebnis von Phase 1
 
-Bis Dienstag, 16.06.2026, soll für Vorgang 1 erledigt sein:
+Bis Dienstag, 16.06.2026, wurde für Vorgang 1 erledigt:
 
 - Sprint-6-Scope ist definiert.
 - Zielprozess ist festgelegt.
@@ -420,18 +420,18 @@ Ziel ist nicht, alle Fehlerfälle live zu zeigen. Mindestens ein Fehlerfall soll
 
 ---
 
-### 9.2 Was jetzt sofort erledigen
+### 9.2 Was in Phase 1 erledigt wurde
 
-In Phase 1 ohne weitere Ergebnisse bereits erledigen:
+In Phase 1 ohne weitere Implementierungsergebnisse erledigt:
 
-- Sprint-6-Scope dokumentieren
-- Zielprozess beschreiben
-- Doku-Datei anlegen
-- Doku-Struktur vorbereiten
-- Demo-Ziel definieren
-- Demo-Szenarien beschreiben
-- KI-Nutzung und Datenschutz als geplanten Abschnitt vorbereiten
-- offene Abhängigkeiten markieren
+- Sprint-6-Scope dokumentiert
+- Zielprozess beschrieben
+- Doku-Datei angelegt
+- Doku-Struktur vorbereitet
+- Demo-Ziel definiert
+- Demo-Szenarien beschrieben
+- KI-Nutzung und Datenschutz als geplanten Abschnitt vorbereitet
+- offene Abhängigkeiten markiert
 
 ---
 

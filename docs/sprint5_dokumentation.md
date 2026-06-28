@@ -63,7 +63,7 @@ Sie enthält:
 | Simulation            | Vollständige Demo-Simulation über Prozessvariable`simulateUiPathError`                       |
 | Formular-Update       | `Rechnungs_Pruefung.form` — neue Checkbox zum Steuern der Simulation                          |
 | Worker-Integration    | `uipath_handler` in `worker.py` registriert                                                    |
-| Deploy-Skript         | `deploy_bmpn.py` deployt jetzt beide BPMN-Dateien                                              |
+| Deploy-Skript         | `scripts/deploy_bmpn.py` deployt jetzt beide BPMN-Dateien                                      |
 | Tests                 | 2 Unit-Tests in`test_uipath_handler.py`                                                        |
 | Dokumentation         | Diese Datei +`docs/sprint5_uipath-integration.md`                                              |
 
@@ -378,10 +378,10 @@ Alle Tests laufen ohne laufende Dienste durch (Netzwerk wird gemockt, Zeebe wird
 
 ### 10.1 BPMN-Deployment
 
-Das Skript `deploy_bmpn.py` deployt automatisch beide BPMN-Prozesse und alle Formulare:
+Das Skript `scripts/deploy_bmpn.py` deployt automatisch beide BPMN-Prozesse und alle Formulare:
 
 ```bash
-python deploy_bmpn.py
+python scripts/deploy_bmpn.py
 ```
 
 Deployete Ressourcen:
@@ -394,7 +394,7 @@ Deployete Ressourcen:
 ### 10.2 Systemstart
 
 ```bash
-bash start_all.sh
+bash scripts/start_all.sh
 ```
 
 Startet: Zeebe/Camunda (Docker), gRPC-Service, RabbitMQ, Zahlungssystem, Python-Worker.
@@ -422,8 +422,8 @@ Die Demo zeigt beide Szenarien des BPMN-Modells mit UiPath-Erweiterung.
 
 ### 11.1 Vorbereitung
 
-1. Infrastruktur starten: `bash start_all.sh`
-2. BPMN deployen: `python deploy_bmpn.py`
+1. Infrastruktur starten: `bash scripts/start_all.sh`
+2. BPMN deployen: `python scripts/deploy_bmpn.py`
 3. Camunda Operate öffnen: `http://localhost:8081` (demo/demo)
 4. Camunda Tasklist öffnen: `http://localhost:8082` (demo/demo)
 
@@ -539,7 +539,7 @@ Die Architektur ist sauber getrennt:
 | Python-Handler                            | `worker/src/handlers/uipath_handler.py`      |
 | Handler-Tests                             | `worker/src/tests/test_uipath_handler.py`    |
 | Worker (aktualisiert)                     | `worker/src/worker.py`                       |
-| Deploy-Skript (aktualisiert)              | `deploy_bmpn.py`                             |
+| Deploy-Skript (aktualisiert)              | `scripts/deploy_bmpn.py`                     |
 | Umgebungsvariablen-Vorlage                | `.env` (via `.gitignore` geschützt)         |
 
 ---

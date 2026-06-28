@@ -37,9 +37,13 @@ def test_extrahiere_daten_aus_text():
     assert daten["billingAddress"] == "Hauptstrasse 12, 12345 Berlin"
     
     assert "invoiceItems" in daten
-    assert isinstance(daten["invoiceItems"], str)
-    assert "Consulting Dienstleistung" in daten["invoiceItems"]
-    assert "2.0 x 50.0 = 100.0" in daten["invoiceItems"]
+    assert isinstance(daten["invoiceItems"], list)
+    assert len(daten["invoiceItems"]) == 1
+    item = daten["invoiceItems"][0]
+    assert item["description"] == "Consulting Dienstleistung"
+    assert item["quantity"] == 2.0
+    assert item["unitPrice"] == 50.0
+    assert item["totalPrice"] == 100.0
 
 
 @pytest.mark.asyncio
@@ -55,7 +59,8 @@ async def test_handle_pdf_auslesen_erfolg():
     assert ergebnis["amountGross"] == 595.0
     assert "Hauptstrasse" in ergebnis["billingAddress"]
     assert "12345 Berlin" in ergebnis["billingAddress"]
-    assert "Consulting Dienstleistung" in ergebnis["invoiceItems"]
+    assert isinstance(ergebnis["invoiceItems"], list)
+    assert any(item["description"] == "Consulting Dienstleistung" for item in ergebnis["invoiceItems"])
 
 
 @pytest.mark.asyncio

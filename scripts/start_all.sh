@@ -4,8 +4,10 @@
 # Kein 'set -e', da Docker-Compose bei bekannten
 # Ghost-Containern Fehler liefert, obwohl alles startet.
 
-# Get the directory of this script
-HIER="$(cd "$(dirname "$0")" && pwd)"
+# Get the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # Fester Compose-Projektname (vermeidet Ghost-Container-Konflikte)
 export COMPOSE_PROJECT_NAME=dvg-app
@@ -74,7 +76,7 @@ done
 # 3. Deploy BPMN and Forms
 echo ""
 echo ">>> 3. Stelle BPMN-Prozess und Formulare bereit..."
-python3 "$HIER/deploy_bmpn.py"
+python3 "$SCRIPT_DIR/deploy_bmpn.py"
 if [ $? -ne 0 ]; then
   echo "   [FEHLER] BPMN-Deployment fehlgeschlagen!"
   exit 1
@@ -85,13 +87,13 @@ echo ""
 echo ">>> 4. Starte Backend-Dienste in neuen Terminal-Fenstern..."
 
 echo "   -> Starte gRPC Server..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== gRPC-Server ===' && exec python3 grpc-service/src/server.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$PROJECT_ROOT' && echo '=== gRPC-Server ===' && exec python3 grpc-service/src/server.py\""
 
 echo "   -> Starte Worker..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== Worker ===' && exec python3 worker/src/worker.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$PROJECT_ROOT' && echo '=== Worker ===' && exec python3 worker/src/worker.py\""
 
 echo "   -> Starte RabbitMQ Consumer..."
-osascript -e "tell app \"Terminal\" to do script \"cd '$HIER' && echo '=== RabbitMQ Consumer ===' && exec python3 zahlungssystem/src/consumer.py\""
+osascript -e "tell app \"Terminal\" to do script \"cd '$PROJECT_ROOT' && echo '=== RabbitMQ Consumer ===' && exec python3 zahlungssystem/src/consumer.py\""
 
 echo ""
 echo "==========================================================="
@@ -102,6 +104,6 @@ echo "  - Operate:  http://localhost:8081  (Login: demo / demo)"
 echo "  - RabbitMQ: http://localhost:15672 (Login: admin / admin)"
 echo ""
 echo "  Du kannst jetzt eine neue E-Mail-Rechnung simulieren mit:"
-echo "  -> python3 auto_email_start.py"
+echo "  -> python3 scripts/auto_email_start.py"
 echo "==========================================================="
 echo ""

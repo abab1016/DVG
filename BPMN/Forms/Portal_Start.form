@@ -1,17 +1,12 @@
 {
-  "executionPlatform": "Camunda Cloud",
-  "executionPlatformVersion": "8.6.0",
-  "exporter": {
-    "name": "Camunda Web Modeler",
-    "version": "1d3193f"
-  },
-  "schemaVersion": 19,
-  "id": "Form_PortalStart",
   "components": [
     {
       "text": "### Rechnungsportal - Neue Rechnung einreichen\nBitte füllen Sie das Online-Formular vollständig aus. Die Daten werden automatisch verarbeitet.",
       "type": "text",
-      "id": "Field_Header"
+      "id": "Field_Header",
+      "layout": {
+        "row": "Row_1xoe5je"
+      }
     },
     {
       "label": "Rechnungs-ID (Eindeutig) *",
@@ -182,14 +177,76 @@
     },
     {
       "label": "Rechnungspositionen",
-      "type": "textarea",
+      "components": [
+        {
+          "label": "Beschreibung",
+          "type": "textfield",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 6
+          },
+          "id": "Field_Item_Description",
+          "key": "description",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "label": "Menge",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_Quantity",
+          "key": "quantity",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "label": "Einzelpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_UnitPrice",
+          "key": "unitPrice"
+        },
+        {
+          "label": "Gesamtpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_TotalPrice",
+          "key": "totalPrice"
+        }
+      ],
+      "showOutline": true,
+      "isRepeating": true,
+      "allowAddRemove": true,
+      "defaultRepetitions": 1,
+      "type": "dynamiclist",
       "layout": {
         "row": "Row_8"
       },
       "id": "Field_invoiceItems",
-      "key": "invoiceItems",
-      "description": "Positionen (Format: - Beschreibung: Menge x Preis)"
+      "isReorderable": true,
+      "allowAdd": true,
+      "allowRemove": true,
+      "path": "invoiceItems"
     }
   ],
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "schemaVersion": 19,
+  "id": "Form_PortalStart",
   "type": "default"
 }

@@ -65,6 +65,10 @@ async def handle_zahlung_senden(**variablen: Any) -> Dict[str, Any]:
         logger.error("[%s] AMQP-Fehler fuer %s: %s",
                      JOB_TYPE_ZAHLUNG_SENDEN, invoice_id, fehler)
         raise
+    except Exception as fehler:
+        logger.error("[%s] Unerwarteter Fehler fuer %s: %s",
+                     JOB_TYPE_ZAHLUNG_SENDEN, invoice_id, fehler)
+        raise BusinessError(ERROR_CODE_RABBITMQ, f"Unerwarteter Fehler: {str(fehler)}")
 
     logger.info("[%s] Zahlungsauftrag gesendet fuer %s, Betrag: %s %s",
                 JOB_TYPE_ZAHLUNG_SENDEN, invoice_id,

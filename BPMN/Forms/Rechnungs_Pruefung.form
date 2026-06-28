@@ -1,27 +1,39 @@
 {
-  "executionPlatform": "Camunda Cloud",
-  "executionPlatformVersion": "8.6.0",
-  "exporter": {
-    "name": "Camunda Web Modeler",
-    "version": "1d3193f"
-  },
-  "schemaVersion": 19,
-  "id": "Form_RechnungsPruefung",
   "components": [
     {
       "text": "### Rechnungsprüfung & Freigabe\nBitte prüfen Sie die Rechnungsdaten und treffen Sie eine Entscheidung.",
       "type": "text",
-      "id": "Field_Header"
+      "id": "Field_Header",
+      "layout": {
+        "row": "Row_1uacim9"
+      }
+    },
+    {
+      "text": "### ⚠️ AI-Extraktion: Plausibilitätswarnung\n**Hinweise der automatischen Prüfung:**\n{{aiReviewGruende}}",
+      "type": "text",
+      "id": "Field_aiReviewWarning",
+      "conditional": {
+        "hide": "=aiPlausibilityStatus != \"NEEDS_REVIEW\""
+      },
+      "layout": {
+        "row": "Row_0zo5e1b"
+      }
     },
     {
       "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
       "type": "text",
-      "id": "Field_pdfLink"
+      "id": "Field_pdfLink",
+      "layout": {
+        "row": "Row_04bsz15"
+      }
     },
     {
       "text": "**Rechnungsdaten zur Prüfung:**",
       "type": "text",
-      "id": "Field_SubHeader"
+      "id": "Field_SubHeader",
+      "layout": {
+        "row": "Row_13d8pd6"
+      }
     },
     {
       "label": "Rechnungs-ID",
@@ -166,18 +178,79 @@
     },
     {
       "label": "Rechnungspositionen",
-      "type": "textarea",
+      "components": [
+        {
+          "label": "Beschreibung",
+          "type": "textfield",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 6
+          },
+          "id": "Field_Item_Description",
+          "key": "description",
+          "validate": {
+            "required": true
+          },
+          "disabled": true
+        },
+        {
+          "label": "Menge",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_Quantity",
+          "key": "quantity",
+          "validate": {
+            "required": true
+          },
+          "disabled": true
+        },
+        {
+          "label": "Einzelpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_UnitPrice",
+          "key": "unitPrice",
+          "disabled": true
+        },
+        {
+          "label": "Gesamtpreis",
+          "type": "number",
+          "layout": {
+            "row": "Row_Item_1",
+            "columns": 2
+          },
+          "id": "Field_Item_TotalPrice",
+          "key": "totalPrice",
+          "disabled": true
+        }
+      ],
+      "showOutline": true,
+      "isRepeating": true,
+      "allowAddRemove": true,
+      "defaultRepetitions": 1,
+      "type": "dynamiclist",
       "layout": {
         "row": "Row_8"
       },
       "id": "Field_invoiceItems",
-      "key": "invoiceItems",
-      "disabled": true
+      "isReorderable": false,
+      "allowAdd": false,
+      "allowRemove": false,
+      "path": "invoiceItems"
     },
     {
       "text": "---\n**Entscheidung:**",
       "type": "text",
-      "id": "Field_Separator"
+      "id": "Field_Separator",
+      "layout": {
+        "row": "Row_0fk2cis"
+      }
     },
     {
       "label": "Freigabeentscheidung *",
@@ -190,7 +263,7 @@
       "validate": {
         "required": true
       },
-      "valuesExpression": "=[{\"label\": \"✅ Freigegeben (APPROVED)\", \"value\": \"APPROVED\"}, {\"label\": \"❌ Abgelehnt (REJECTED)\", \"value\": \"REJECTED\"}, {\"label\": \"❓ Rückfrage nötig (INFO_REQUIRED)\", \"value\": \"INFO_REQUIRED\"}]"
+      "valuesExpression": "=[{\"label\": \"✅ Freigegeben (APPROVED)\", \"value\": \"APPROVED\"}, {\"label\": \"❌ Abgelehnt (REJECTED)\", \"value\": \"REJECTED\"}, {\"label\": \"❓ Rückfrage nötig (INFO_REQUIRED)\", \"value\": \"INFO_REQUIRED\"}, {\"label\": \"✏️ Korrektur nötig (CORRECTION_REQUIRED)\", \"value\": \"CORRECTION_REQUIRED\"}]"
     },
     {
       "label": "Compliance Check anfordern?",
@@ -203,16 +276,6 @@
       "description": "Manuell eine zusätzliche Compliance-Prüfung anfordern"
     },
     {
-      "label": "UiPath-Bot-Fehler simulieren (ERP-Erfassung)?",
-      "type": "checkbox",
-      "layout": {
-        "row": "Row_SimulateError"
-      },
-      "id": "Field_simulateUiPathError",
-      "key": "simulateUiPathError",
-      "description": "Aktivieren, um einen Fehler des UiPath-Bots bei der ERP-Buchung zu simulieren und den manuellen Fallback zu testen"
-    },
-    {
       "label": "Begründung / Kommentar",
       "type": "textarea",
       "layout": {
@@ -222,5 +285,13 @@
       "key": "approvalComment"
     }
   ],
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "schemaVersion": 19,
+  "id": "Form_RechnungsPruefung",
   "type": "default"
 }

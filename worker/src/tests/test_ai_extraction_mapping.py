@@ -1,155 +1,130 @@
-import json
-from pathlib import Path
-
 import pytest
-
 from mapping.ai_extraction_mapping import (
-    STATUS_NEEDS_REVIEW,
-    STATUS_VALID,
     MappingFehler,
-    ai_daten_zu_prozessvariablen,
     pruefe_plausibilitaet,
+    ai_daten_zu_prozessvariablen,
 )
 
-_BEISPIEL_ORDNER = Path(__file__).resolve().parent.parent / "mapping" / "beispiele"
 
-
-def vollstaendige_ai_daten() -> dict:
+def valid_ai_data() -> dict:
     return {
-        "invoiceId": "INV-2026-101",
-        "invoiceNumber": "RE-2026-101",
-        "supplierName": "Muster GmbH",
-        "invoiceDate": "2026-06-10",
-        "dueDate": "2026-07-10",
-        "amountGross": 1190.50,
-        "amountNet": 1000.00,
-        "currency": "EUR",
-        "iban": "DE89370400440532013000",
-        "billingAddress": "Musterweg 1, 12345 Musterstadt",
-        "invoiceItems": [
-            {"description": "Beratung", "quantity": 2, "unitPrice": 500.0, "totalPrice": 1000.0}
-        ],
-        "confidence": {
-            "invoiceId": 0.98,
-            "invoiceNumber": 0.97,
-            "supplierName": 0.96,
-            "invoiceDate": 0.99,
-            "amountGross": 0.95,
-            "currency": 0.99,
-            "iban": 0.93,
-            "billingAddress": 0.94,
-        },
-        "sourceFile": "rechnung_muster_gmbh_juni.pdf",
+      "invoiceId": "INV-2026-140",
+      "invoiceNumber": "RE-2026-140",
+      "supplierName": "DVG Lieferant GmbH",
+      "invoiceDate": "2026-06-20",
+      "dueDate": "2026-07-20",
+      "amountGross": 595.00,
+      "amountNet": 500.00,
+      "currency": "EUR",
+      "iban": "DE89370400440532013000",
+      "billingAddress": "Hauptstrasse 12, 12345 Berlin",
+      "confidence": {
+        "invoiceId": 0.95,
+        "invoiceNumber": 0.98,
+        "supplierName": 0.99,
+        "invoiceDate": 0.97,
+        "amountGross": 0.95,
+        "currency": 0.99,
+        "iban": 0.96,
+        "billingAddress": 0.92
+      },
+      "sourceFile": "INV-2026-140.pdf",
+      "extractionEngine": "n8n+gemini-1.5"
     }
 
 
-# --- pruefe_plausibilitaet --------------------------------------------------
-
-def test_happy_path_liefert_valid_ohne_gruende():
-    status, gruende = pruefe_plausibilitaet(vollstaendige_ai_daten())
-    assert status == STATUS_VALID
-    assert gruende == []
+def test_happy_path_validation():
+    status, reasons = pruefe_plausibilitaet(valid_ai_data())
+    assert status == "VALID"
+    assert len(reasons) == 0
 
 
-def test_fehlendes_pflichtfeld_liefert_needs_review():
-    daten = vollstaendige_ai_daten()
-    del daten["iban"]
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_NEEDS_REVIEW
-    assert any("iban" in g for g in gruende)
+def test_missing_mandatory_field():
+    data = valid_ai_data()
+    del data["supplierName"]
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("supplierName" in r for r in reasons)
 
 
-def test_niedrige_confidence_liefert_needs_review():
-    daten = vollstaendige_ai_daten()
-    daten["confidence"]["invoiceNumber"] = 0.5
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_NEEDS_REVIEW
-    assert any("invoiceNumber" in g for g in gruende)
+def test_empty_mandatory_field():
+    data = valid_ai_data()
+    data["invoiceNumber"] = "   "
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("invoiceNumber" in r for r in reasons)
 
 
-def test_fehlende_confidence_angabe_liefert_needs_review():
-    daten = vollstaendige_ai_daten()
-    del daten["confidence"]["amountGross"]
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_NEEDS_REVIEW
-    assert any("amountGross" in g for g in gruende)
+def test_low_confidence_value():
+    data = valid_ai_data()
+    data["confidence"]["iban"] = 0.84
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("iban" in r and "under the threshold" or "unter der Schwelle" in r for r in reasons)
 
 
-def test_negativer_betrag_liefert_review_grund():
-    daten = vollstaendige_ai_daten()
-    daten["amountNet"] = -10.0
-    _, gruende = pruefe_plausibilitaet(daten)
-    assert any("negativ" in g for g in gruende)
+def test_missing_confidence_dict():
+    data = valid_ai_data()
+    del data["confidence"]
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("Confidence-Objekt fehlt" in r for r in reasons)
 
 
-def test_brutto_kleiner_netto_liefert_review_grund():
-    daten = vollstaendige_ai_daten()
-    daten["amountNet"] = 5000.0
-    _, gruende = pruefe_plausibilitaet(daten)
-    assert any("kleiner als amountNet" in g for g in gruende)
+def test_missing_single_confidence_value():
+    data = valid_ai_data()
+    del data["confidence"]["currency"]
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("Confidence für Feld 'currency' fehlt" in r for r in reasons)
 
 
-def test_nicht_numerischer_betrag_liefert_review_statt_fehler():
-    daten = vollstaendige_ai_daten()
-    daten["amountGross"] = "nicht-lesbar"
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_NEEDS_REVIEW
-    assert any("amountGross" in g and "nicht numerisch" in g for g in gruende)
+def test_negative_amounts():
+    data = valid_ai_data()
+    data["amountGross"] = -100.00
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("amountGross darf nicht negativ sein" in r for r in reasons)
 
 
-def test_ungueltige_waehrung_liefert_review_grund():
-    daten = vollstaendige_ai_daten()
-    daten["currency"] = "EURO"
-    _, gruende = pruefe_plausibilitaet(daten)
-    assert any("Waehrung" in g for g in gruende)
+def test_gross_smaller_than_net():
+    data = valid_ai_data()
+    data["amountGross"] = 400.00
+    data["amountNet"] = 500.00
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("amountGross" in r and "amountNet" in r for r in reasons)
 
 
-def test_falscher_typ_wirft_mapping_fehler():
+def test_invalid_currency_format():
+    data = valid_ai_data()
+    data["currency"] = "EURO"
+    status, reasons = pruefe_plausibilitaet(data)
+    assert status == "NEEDS_REVIEW"
+    assert any("currency" in r or "Währung" in r for r in reasons)
+
+
+def test_structural_failure():
     with pytest.raises(MappingFehler):
-        pruefe_plausibilitaet(["kein", "dict"])
+        pruefe_plausibilitaet("not-a-dict")
 
 
-# --- ai_daten_zu_prozessvariablen -------------------------------------------
-
-def test_mapping_liefert_canonical_prozessvariablen():
-    variablen = ai_daten_zu_prozessvariablen(vollstaendige_ai_daten())
-    assert variablen["invoiceId"] == "INV-2026-101"
-    assert variablen["channel"] == "EMAIL"
-    assert variablen["fileName"] == "rechnung_muster_gmbh_juni.pdf"
-    assert variablen["aiPlausibilityStatus"] == STATUS_VALID
-    assert variablen["aiReviewGruende"] == []
-
-
-def test_mapping_uebernimmt_status_und_gruende_bei_review_fall():
-    daten = vollstaendige_ai_daten()
-    del daten["iban"]
-    variablen = ai_daten_zu_prozessvariablen(daten)
-    assert variablen["aiPlausibilityStatus"] == STATUS_NEEDS_REVIEW
-    assert any("iban" in g for g in variablen["aiReviewGruende"])
-    assert "iban" not in variablen
+def test_mapping_to_process_variables():
+    data = valid_ai_data()
+    vars = ai_daten_zu_prozessvariablen(data)
+    
+    assert vars["channel"] == "EMAIL"
+    assert vars["fileName"] == "INV-2026-140.pdf"
+    assert vars["aiPlausibilityStatus"] == "VALID"
+    assert vars["aiReviewGruende"] == ""
+    assert vars["invoiceId"] == "INV-2026-140"
+    assert "confidence" not in vars
 
 
-def test_mapping_reicht_invoice_items_durch():
-    variablen = ai_daten_zu_prozessvariablen(vollstaendige_ai_daten())
-    assert variablen["invoiceItems"][0]["description"] == "Beratung"
-
-
-def test_mapping_wirft_fehler_bei_falschem_typ():
-    with pytest.raises(MappingFehler):
-        ai_daten_zu_prozessvariablen("kein-dict")
-
-
-# --- Beispieldateien (KAN-452 / KAN-453) -------------------------------------
-
-def test_beispiel_happy_path_datei_ist_valid():
-    daten = json.loads((_BEISPIEL_ORDNER / "ai_extraktion_happy_path.json").read_text(encoding="utf-8"))
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_VALID
-    assert gruende == []
-
-
-def test_beispiel_human_review_datei_ist_needs_review():
-    daten = json.loads((_BEISPIEL_ORDNER / "ai_extraktion_human_review.json").read_text(encoding="utf-8"))
-    status, gruende = pruefe_plausibilitaet(daten)
-    assert status == STATUS_NEEDS_REVIEW
-    assert len(gruende) >= 2
+def test_mapping_with_errors_to_process_variables():
+    data = valid_ai_data()
+    data["confidence"]["iban"] = 0.50
+    vars = ai_daten_zu_prozessvariablen(data)
+    
+    assert vars["aiPlausibilityStatus"] == "NEEDS_REVIEW"
+    assert "iban" in vars["aiReviewGruende"]

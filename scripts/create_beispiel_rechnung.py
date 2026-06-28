@@ -8,9 +8,9 @@ from pathlib import Path
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-HIER = Path(__file__).resolve().parent
-COUNTER_DATEI = HIER / "rechnungs_counter.txt"
-ZIEL_ORDNER = HIER / "Rechnungsdaten"
+PROJEKT_WURZEL = Path(__file__).resolve().parent.parent
+COUNTER_DATEI = PROJEKT_WURZEL / "rechnungs_counter.txt"
+ZIEL_ORDNER = PROJEKT_WURZEL / "Rechnungsdaten"
 ZIEL_ORDNER.mkdir(exist_ok=True)
 PDF_PFAD = ZIEL_ORDNER / "beispiel_rechnung.pdf"
 

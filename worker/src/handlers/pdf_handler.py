@@ -185,10 +185,7 @@ def _extrahiere_daten_aus_text(text: str) -> Dict[str, Any]:
                 continue
 
     if items:
-        lines = []
-        for item in items:
-            lines.append(f"- {item['description']}: {item['quantity']} x {item['unitPrice']} = {item['totalPrice']}")
-        daten["invoiceItems"] = "\n".join(lines)
+        daten["invoiceItems"] = items
 
     return daten
 

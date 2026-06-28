@@ -1,6 +1,10 @@
 #!/bin/bash
 # Stop script for DVG Invoice Approval System on macOS
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 # Muss zum start_all.sh Projektnamen passen
 export COMPOSE_PROJECT_NAME=dvg-app
 
@@ -22,16 +26,16 @@ else
   echo "   [-] Worker läuft nicht."
 fi
 
-if pgrep -f "grpc_server.py\|server.py.*grpc" > /dev/null 2>&1; then
-  pkill -f "grpc_server.py\|server.py.*grpc"
+if pgrep -f "grpc-service/src/server.py|grpc_server.py" > /dev/null 2>&1; then
+  pkill -f "grpc-service/src/server.py|grpc_server.py"
   echo "   [✓] gRPC-Server gestoppt."
   STOPPED=$((STOPPED + 1))
 else
   echo "   [-] gRPC-Server läuft nicht."
 fi
 
-if pgrep -f "rabbitmq_consumer.py\|consumer.py.*zahlungssystem" > /dev/null 2>&1; then
-  pkill -f "rabbitmq_consumer.py\|consumer.py.*zahlungssystem"
+if pgrep -f "zahlungssystem/src/consumer.py|rabbitmq_consumer.py" > /dev/null 2>&1; then
+  pkill -f "zahlungssystem/src/consumer.py|rabbitmq_consumer.py"
   echo "   [✓] RabbitMQ Consumer gestoppt."
   STOPPED=$((STOPPED + 1))
 else
@@ -71,6 +75,32 @@ echo ""
 echo "==========================================="
 echo "  [ERFOLG] Alles wurde gestoppt!"
 echo "==========================================="
-echo "  Zum Neustarten: ./start_all.sh"
+echo "  Zum Neustarten: ./scripts/start_all.sh"
 echo "==========================================="
+echo ""
+
+# 4. Schließe die Terminal-Fenster, die von start_all.sh geöffnet wurden
+echo ">>> 4. Räume Terminal-Fenster auf..."
+osascript -e '
+tell application "Terminal"
+    set windowIdsToClose to {}
+    repeat with w in windows
+        try
+            repeat with t in tabs of w
+                set tabHistory to history of t
+                if tabHistory contains "=== gRPC-Server ===" or tabHistory contains "=== Worker ===" or tabHistory contains "=== RabbitMQ Consumer ===" then
+                    set end of windowIdsToClose to id of w
+                    exit repeat
+                end if
+            end repeat
+        end try
+    end repeat
+    repeat with wId in windowIdsToClose
+        try
+            close window id wId saving no
+        end try
+    end repeat
+end tell
+' >/dev/null 2>&1
+echo "   [✓] Geöffnete Hintergrund-Terminals geschlossen."
 echo ""

@@ -4,8 +4,8 @@ Aufgaben (Subtask 4.7, KAN-269):
   - Schreibt eine Abschluss-JSON-Datei in den Ordner Rechnungsdaten/
   - Dateinhalt: Rechnungs-ID, Abschlussstatus, Zeitstempel
   - Fehler klassifizieren:
-      * Dateisystem-Fehler (OSError) → Exception → Zeebe-Retry
-      * Daten-Fehler                    → BusinessError
+      * Alle Fehler (OSError, sonstige) → BusinessError → Incident in Operate
+        (Der Task hat keine BPMN Error-Boundary; Incident ist das korrekte Verhalten)
 """
 import asyncio
 import json
@@ -64,7 +64,11 @@ async def handle_archivieren(**variablen: Any) -> Dict[str, Any]:
     except OSError as fehler:
         logger.error("[%s] Dateisystem-Fehler fuer %s: %s",
                      JOB_TYPE_ARCHIVIEREN, invoice_id, fehler)
-        raise
+        raise BusinessError(ERROR_CODE_ARCHIVE, f"Dateisystem-Fehler: {str(fehler)}")
+    except Exception as fehler:
+        logger.error("[%s] Unerwarteter Fehler fuer %s: %s",
+                     JOB_TYPE_ARCHIVIEREN, invoice_id, fehler)
+        raise BusinessError(ERROR_CODE_ARCHIVE, f"Unerwarteter Fehler bei Archivierung: {str(fehler)}")
 
     logger.info("[%s] Abschluss archiviert: %s", JOB_TYPE_ARCHIVIEREN, datei_pfad)
     return {"archiveStatus": "DONE"}

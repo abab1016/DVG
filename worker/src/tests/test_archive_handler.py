@@ -82,5 +82,6 @@ async def test_leere_invoice_id_wirft_business_error():
 async def test_oserror_wird_re_raised():
     with patch("handlers.archive_handler._datei_schreiben",
                side_effect=OSError("Zugriff verweigert")):
-        with pytest.raises(OSError):
+        with pytest.raises(BusinessError) as info:
             await handle_archivieren(**vollstaendige_variablen())
+    assert info.value.error_code == ERROR_CODE_ARCHIVE

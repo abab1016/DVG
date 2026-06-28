@@ -1,17 +1,17 @@
 {
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "1d3193f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_ManagerPruefung",
   "components": [
     {
-      "text": "### Rechnungsmetadaten erfassen\nBitte alle Pflichtfelder (*) aus der Rechnung übertragen.",
+      "text": "### Vorgang prüfen (Manager)\nBitte prüfen Sie die Rechnungsdaten und bestätigen Sie die manuelle Bearbeitung.",
       "type": "text",
       "id": "Field_Header"
-    },
-    {
-      "text": "### ⚠️ AI-Extraktion unvollständig / unplausibel\n**Ursachen für Human Review:**\n{{aiReviewGruende}}",
-      "type": "text",
-      "id": "Field_aiReviewGruende",
-      "conditional": {
-        "hide": "=aiPlausibilityStatus != \"NEEDS_REVIEW\""
-      }
     },
     {
       "text": "### Rechnungs-PDF\n[Rechnungs-PDF anzeigen / herunterladen ({{fileName}})](http://localhost:8090/api/files/{{fileName}})",
@@ -19,7 +19,12 @@
       "id": "Field_pdfLink"
     },
     {
-      "label": "Rechnungs-ID *",
+      "text": "**Rechnungsdaten zur Ansicht:**",
+      "type": "text",
+      "id": "Field_SubHeader"
+    },
+    {
+      "label": "Rechnungs-ID",
       "type": "textfield",
       "layout": {
         "row": "Row_1",
@@ -27,13 +32,10 @@
       },
       "id": "Field_invoiceId",
       "key": "invoiceId",
-      "validate": {
-        "required": true
-      },
-      "disabled": false
+      "disabled": true
     },
     {
-      "label": "Rechnungsnummer *",
+      "label": "Rechnungsnummer",
       "type": "textfield",
       "layout": {
         "row": "Row_1",
@@ -41,13 +43,10 @@
       },
       "id": "Field_invoiceNumber",
       "key": "invoiceNumber",
-      "validate": {
-        "required": true
-      },
-      "description": "z.B. RE-2026-7781"
+      "disabled": true
     },
     {
-      "label": "Lieferantenname *",
+      "label": "Lieferantenname",
       "type": "textfield",
       "layout": {
         "row": "Row_2",
@@ -55,9 +54,7 @@
       },
       "id": "Field_supplierName",
       "key": "supplierName",
-      "validate": {
-        "required": true
-      }
+      "disabled": true
     },
     {
       "label": "Lieferanten-E-Mail",
@@ -67,10 +64,11 @@
         "columns": 6
       },
       "id": "Field_supplierEmail",
-      "key": "supplierEmail"
+      "key": "supplierEmail",
+      "disabled": true
     },
     {
-      "label": "Rechnungsdatum *",
+      "label": "Rechnungsdatum",
       "type": "textfield",
       "layout": {
         "row": "Row_3",
@@ -78,10 +76,7 @@
       },
       "id": "Field_invoiceDate",
       "key": "invoiceDate",
-      "description": "JJJJ-MM-TT",
-      "validate": {
-        "required": true
-      }
+      "disabled": true
     },
     {
       "label": "Fälligkeitsdatum",
@@ -92,7 +87,7 @@
       },
       "id": "Field_dueDate",
       "key": "dueDate",
-      "description": "JJJJ-MM-TT"
+      "disabled": true
     },
     {
       "label": "Nettobetrag",
@@ -102,10 +97,11 @@
         "columns": 4
       },
       "id": "Field_amountNet",
-      "key": "amountNet"
+      "key": "amountNet",
+      "disabled": true
     },
     {
-      "label": "Bruttobetrag *",
+      "label": "Bruttobetrag",
       "type": "number",
       "layout": {
         "row": "Row_4",
@@ -113,12 +109,10 @@
       },
       "id": "Field_amountGross",
       "key": "amountGross",
-      "validate": {
-        "required": true
-      }
+      "disabled": true
     },
     {
-      "label": "Währung *",
+      "label": "Währung",
       "type": "textfield",
       "layout": {
         "row": "Row_4",
@@ -126,23 +120,17 @@
       },
       "id": "Field_currency",
       "key": "currency",
-      "defaultValue": "EUR",
-      "validate": {
-        "required": true
-      }
+      "disabled": true
     },
     {
-      "label": "IBAN *",
+      "label": "IBAN",
       "type": "textfield",
       "layout": {
         "row": "Row_5"
       },
       "id": "Field_iban",
       "key": "iban",
-      "validate": {
-        "required": true
-      },
-      "description": "Zahlungsempfänger-IBAN"
+      "disabled": true
     },
     {
       "label": "Dateiname",
@@ -152,37 +140,41 @@
         "columns": 6
       },
       "id": "Field_fileName",
-      "key": "fileName"
+      "key": "fileName",
+      "disabled": true
     },
     {
-      "label": "Eingangskanal *",
-      "type": "select",
+      "label": "Eingangskanal",
+      "type": "textfield",
       "layout": {
         "row": "Row_6",
         "columns": 6
       },
       "id": "Field_channel",
       "key": "channel",
-      "defaultValue": "EMAIL",
-      "validate": {
-        "required": true
-      },
-      "valuesExpression": "=[{\"label\": \"E-Mail\", \"value\": \"EMAIL\"}, {\"label\": \"EDI\", \"value\": \"EDI\"}]"
+      "disabled": true
     },
     {
-      "label": "Rechnungsadresse *",
+      "label": "Rechnungsadresse",
       "type": "textfield",
       "layout": {
         "row": "Row_7"
       },
       "id": "Field_billingAddress",
       "key": "billingAddress",
-      "validate": {
-        "required": true
-      }
+      "disabled": true
     },
     {
       "label": "Rechnungspositionen",
+      "type": "dynamiclist",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "path": "invoiceItems",
+      "isReorderable": false,
+      "allowAdd": false,
+      "allowRemove": false,
       "components": [
         {
           "label": "Beschreibung",
@@ -195,7 +187,8 @@
           "key": "description",
           "validate": {
             "required": true
-          }
+          },
+          "disabled": true
         },
         {
           "label": "Menge",
@@ -208,7 +201,8 @@
           "key": "quantity",
           "validate": {
             "required": true
-          }
+          },
+          "disabled": true
         },
         {
           "label": "Einzelpreis",
@@ -218,7 +212,8 @@
             "columns": 2
           },
           "id": "Field_Item_UnitPrice",
-          "key": "unitPrice"
+          "key": "unitPrice",
+          "disabled": true
         },
         {
           "label": "Gesamtpreis",
@@ -228,31 +223,28 @@
             "columns": 2
           },
           "id": "Field_Item_TotalPrice",
-          "key": "totalPrice"
+          "key": "totalPrice",
+          "disabled": true
         }
-      ],
-      "showOutline": true,
-      "isRepeating": true,
-      "allowAddRemove": true,
-      "defaultRepetitions": 1,
-      "type": "dynamiclist",
+      ]
+    },
+    {
+      "text": "---\n**Bestätigung:**",
+      "type": "text",
+      "id": "Field_ConfirmHeader"
+    },
+    {
+      "label": "Der Vorgang wurde von einem Manager manuell bearbeitet",
+      "type": "checkbox",
       "layout": {
-        "row": "Row_8"
+        "row": "Row_Confirm"
       },
-      "id": "Field_invoiceItems",
-      "isReorderable": true,
-      "allowAdd": true,
-      "allowRemove": true,
-      "path": "invoiceItems"
+      "id": "Field_managerProcessed",
+      "key": "managerProcessed",
+      "validate": {
+        "required": true
+      }
     }
   ],
-  "executionPlatform": "Camunda Cloud",
-  "executionPlatformVersion": "8.6.0",
-  "exporter": {
-    "name": "Camunda Modeler",
-    "version": "5.48.0"
-  },
-  "schemaVersion": 19,
-  "id": "Form_MetadatenErfassung",
   "type": "default"
 }

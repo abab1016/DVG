@@ -83,4 +83,4 @@
 
 ## Fazit
 
-Alle Pflichtanforderungen des Sprints sind erfüllt. Die zwei während des Reviews festgestellten Lücken im Mindestumfang wurden noch im Sprint behoben. Das System ist end-to-end demonstrierbar über `demo.sh --demo`. Die verbleibenden offenen Punkte sind technische Schulden des Prototyp-Charakters und blockieren die Abgabe nicht.
+Alle Pflichtanforderungen des Sprints sind erfüllt. Die zwei während des Reviews festgestellten Lücken im Mindestumfang wurden noch im Sprint behoben. Das System ist end-to-end demonstrierbar über `scripts/demo.sh --demo`. Die verbleibenden offenen Punkte sind technische Schulden des Prototyp-Charakters und blockieren die Abgabe nicht.

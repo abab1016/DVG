@@ -1,194 +1,290 @@
-# DVG: Digitalisierung Eingangsrechnungsbearbeitung
+# DVG — Digitale Eingangsrechnungsbearbeitung
 
-Prototyp zur Digitalisierung der Eingangsrechnungsbearbeitung. Ein Camunda-8-Workflow steuert den Ablauf: Rechnungsmetadaten werden per gRPC gespeichert, der Zahlungsauftrag geht asynchron über RabbitMQ ans Zahlungssystem.
+KI-gestützter Rechnungsfreigabeprozess auf Basis von Camunda 8, Python und Google Gemini (Sprint 1–6).
 
+---
 
-Wichtig: In der plattform.txt muss entweder "mac" oder "windows" hinterlegt sein! Entscheidend ist das lokale OS.
+## Schnellstart (5 Schritte)
+
+```
+1. Repository klonen
+2. plattform.txt setzen  (windows oder mac)
+3. .env anlegen          (API-Keys vom Team holen)
+4. scripts\install.bat   (einmalig — Dependencies + Docker-Images)
+5. scripts\start_all.bat (bei jedem Start)
+```
+
+Danach läuft alles — Zeebe, Tasklist, RabbitMQ, n8n, gRPC-Service, Worker.
+
+---
 
 ## Architektur
 
-![Architekturdiagramm](images/README/1775498351364.png)
+```
+Rechnung (PDF)
+      │
+      ▼
+ n8n-Webhook ──► Gemini API
+      │               (KI-Extraktion)
+      ▼
+ Camunda 8 / Zeebe
+      │
+      ├──► pyzeebe Worker
+      │         │
+      │    ┌────┴──────────────────┐
+      │    │                       │
+      │    ▼                       ▼
+      │  gRPC-Service          RabbitMQ
+      │  (Metadaten)           (Zahlungsauftrag)
+      │                            │
+      │                            ▼
+      │                     Zahlungssystem
+      │                     (consumer.py)
+      ▼
+ Camunda Tasklist
+ (Human Review / Freigabe)
+```
 
-Seit Sprint 4 orchestriert **Camunda 8** den Prozess. Ein Python-Worker (`pyzeebe`) abonniert die Service-Tasks des BPMN-Modells und ruft die in Sprint 1 gebauten Bausteine auf:
-
-Im Service-Task `save-invoice-metadata` schickt der Worker die Rechnungsmetadaten per gRPC an den Service. Der Service prüft die Eingabe, legt eine JSON-Datei an und gibt die bestätigte Invoice-ID zurück.
-
-Im Service-Task `send-payment-order` baut der Worker mit der bestätigten ID einen Zahlungsauftrag und schreibt ihn in die RabbitMQ-Warteschlange `zahlungsauftraege`. Das Zahlungssystem liest die Nachricht und protokolliert den Status in `Rechnungsdaten/zahlungslog.json`.
-
-Im Service-Task `archive-invoice` schreibt der Worker zum Abschluss eine Datei `Rechnungsdaten/<invoiceId>_abschluss.json`.
-
-Fachliche Fehler (ungültige Daten, Duplikate) wirft der Worker als BPMN-`BusinessError` an ein Error-Boundary-Event; technische Fehler (gRPC/RabbitMQ nicht erreichbar) führen zu Zeebe-Retry und ggf. einem Incident.
+---
 
 ## Voraussetzungen
 
-- Python 3.9 oder neuer
-- Docker Desktop (für RabbitMQ und Camunda 8)
+| Tool | Version | Hinweis |
+|------|---------|---------|
+| Python | 3.9 oder neuer | Beim Installer: "Add python.exe to PATH" anklicken |
+| Docker Desktop | aktuell | Muss vor dem Start laufen |
+| Git | aktuell | — |
 
-Abhängigkeiten installieren:
+---
 
-```bash
-pip install grpcio grpcio-tools pika pyzeebe pytest pytest-asyncio
-```
-
-Proto-Stubs generieren — das muss einmalig gemacht werden, und wieder wenn sich `invoice.proto` ändert:
-
-```bash
-cd grpc-service/src
-python -m grpc_tools.protoc -I proto --python_out=. --grpc_python_out=. proto/invoice.proto
-```
-
-## Schnellstart
-
-Am einfachsten geht es mit dem Demo-Skript, das alles in der richtigen Reihenfolge startet:
+## Schritt 1 — Repository klonen
 
 ```bash
-bash demo.sh
+git clone <repo-url>
+cd DVG
 ```
 
-Das Skript startet RabbitMQ und Camunda 8 (Zeebe/Operate/Tasklist), wartet bis Zeebe bereit ist, startet dann gRPC-Service und Zahlungssystem im Hintergrund und schließlich den pyzeebe-Worker im Vordergrund. Strg+C beendet die Hintergrundprozesse sauber.
+---
 
-Der Worker wartet anschließend auf Jobs. Um den Prozess auszulösen:
+## Schritt 2 — Plattform setzen
 
-1. BPMN `images/Eingangsrechnungsbearbeitung.bpmn` im Camunda Modeler auf Zeebe (`localhost:26500`) deployen.
-2. Prozessinstanz mit den Rechnungs-Variablen starten (siehe [Prozessvariablen](#prozessvariablen)).
-3. Ablauf in Operate (`http://localhost:8081`, Login `demo`/`demo`) verfolgen.
+Die Datei `plattform.txt` im Projektordner muss das Betriebssystem enthalten:
 
-## Manuell starten
+**Windows (PowerShell):**
+```powershell
+"windows" | Out-File plattform.txt -Encoding utf8 -NoNewline
+```
 
-Wer die Komponenten lieber selbst startet, braucht mehrere Terminals. Reihenfolge: RabbitMQ vor dem Consumer, Camunda und gRPC-Service vor dem Worker.
+**macOS / Linux:**
+```bash
+echo -n mac > plattform.txt
+```
 
-**Terminal 1 — RabbitMQ + Camunda 8**
+---
+
+## Schritt 3 — `.env` anlegen
+
+Im Projektordner (neben `docker-compose.yml`) eine Datei `.env` erstellen:
+
+```env
+# Google Gemini API Key (KI-Extraktion via n8n)
+GEMINI_API_KEY=HIER_EINTRAGEN
+
+# UiPath Verbindung (ERP-Bot)
+UIPATH_CLIENT_ID=HIER_EINTRAGEN
+UIPATH_CLIENT_SECRET=HIER_EINTRAGEN
+UIPATH_ORG=HIER_EINTRAGEN
+UIPATH_TENANT=DefaultTenant
+UIPATH_FOLDER_ID=HIER_EINTRAGEN
+UIPATH_QUEUE_NAME=DVG_Rechnungen
+```
+
+> Die echten Werte gibt es vom Projektteam. Die `.env` **niemals committen** — sie steht in `.gitignore`.
+
+---
+
+## Schritt 4 — Einmalige Installation
+
+### Windows
+```bat
+scripts\install.bat
+```
+
+### macOS / Linux
+```bash
+chmod +x scripts/install.sh
+./scripts/install.sh
+```
+
+Das Skript:
+- installiert alle Python-Pakete (`worker`, `grpc-service`, `zahlungssystem`)
+- lädt die Docker-Images vorab herunter (spart Zeit beim ersten Start)
+
+**Danach einmalig:** gRPC-Stubs generieren — die generierten Dateien sind nicht im Repo:
 
 ```bash
-docker compose up -d rabbitmq elasticsearch zeebe operate tasklist
+# Windows
+python -m grpc_tools.protoc -I grpc-service/src/proto --python_out=grpc-service/src --grpc_python_out=grpc-service/src grpc-service/src/proto/invoice.proto
+
+# macOS / Linux
+python3 -m grpc_tools.protoc -I grpc-service/src/proto --python_out=grpc-service/src --grpc_python_out=grpc-service/src grpc-service/src/proto/invoice.proto
 ```
 
-Bereit, wenn `http://localhost:9600/actuator/health` `UP` liefert. Operate: `http://localhost:8081`, Tasklist: `http://localhost:8082` (jeweils `demo`/`demo`).
+---
 
-**Terminal 2 — gRPC-Service**
+## Schritt 5 — System starten
+
+### Windows
+```bat
+scripts\start_all.bat
+```
+
+### macOS / Linux
+```bash
+./scripts/start_all.sh
+```
+
+**Was das Skript automatisch macht:**
+1. Startet alle Docker-Container (Zeebe, RabbitMQ, Elasticsearch, Operate, Tasklist, n8n)
+2. Wartet bis Zeebe bereit ist
+3. Deployed BPMN, Formulare und DMN-Regeln nach Zeebe
+4. Öffnet separate Fenster für gRPC-Service, Worker und RabbitMQ-Consumer
+
+**Beim ersten Start:** Docker lädt Images herunter (~5–10 Min).
+
+---
+
+## Schritt 6 — n8n Workflow importieren (einmalig)
+
+Die KI-Extraktion läuft über n8n. Der Workflow muss einmal manuell importiert werden:
+
+1. n8n öffnen: **http://localhost:5678**
+2. Oben rechts → **"Import from file"**
+3. Datei wählen: `n8n/workflows/sprint6_ai_extraction.json`
+4. Workflow aktivieren (Schalter oben rechts auf **"Active"**)
+
+> Ohne aktiven n8n-Workflow schlägt jeder Prozessstart mit `ERR_AI_EXTRACTION` fehl.
+
+---
+
+## Prozess auslösen
+
+Sobald alles läuft, einen neuen Rechnungsprozess starten:
 
 ```bash
-cd grpc-service/src
-python server.py
+# Windows
+python scripts/auto_email_start.py
+
+# macOS / Linux
+python3 scripts/auto_email_start.py
 ```
 
-Bereit, wenn `[gRPC-Server] Läuft auf Port 50051` erscheint.
+Das Skript generiert eine Test-PDF und schickt die Startnachricht an Zeebe.  
+Danach erscheint die Aufgabe "Rechnung prüfen" in der Camunda Tasklist.
 
-**Terminal 3 — Zahlungssystem**
+---
 
+## Benutzeroberflächen
+
+| Dienst | URL | Login |
+|--------|-----|-------|
+| **Tasklist** — User Tasks bearbeiten | http://localhost:8082 | demo / demo |
+| **Operate** — Prozessinstanzen überwachen | http://localhost:8081 | demo / demo |
+| **RabbitMQ** — Warteschlangen einsehen | http://localhost:15672 | admin / admin |
+| **n8n** — KI-Workflow verwalten | http://localhost:5678 | — |
+
+---
+
+## System stoppen
+
+### Windows
+```bat
+scripts\stop_all.bat
+```
+
+### macOS / Linux
 ```bash
-cd zahlungssystem/src
-python consumer.py
+./scripts/stop_all.sh
 ```
 
-Bereit, wenn `Warte auf Nachrichten in 'zahlungsauftraege' ...` erscheint.
-
-**Terminal 4 — Worker**
-
-```bash
-cd worker/src
-python worker.py
-```
-
-Bereit, wenn `Worker bereit, abonniere Job-Types: save-invoice-metadata, send-payment-order, archive-invoice` erscheint. Details zum Worker in [`worker/README.md`](worker/README.md).
-
-## Prozessvariablen
-
-Die Prozessinstanz wird mit diesen Variablen gestartet. Pflichtfelder für `save-invoice-metadata` und `send-payment-order`:
-
-```json
-{
-  "invoiceId":    "INV-2026-099",
-  "supplierId":   "SUP-456",
-  "supplierName": "Beispiel AG",
-  "invoiceDate":  "2026-04-10",
-  "dueDate":      "2026-05-10",
-  "amountNet":    500.00,
-  "amountGross":  595.00,
-  "currency":     "EUR",
-  "iban":         "DE12345678901234567890",
-  "channel":      "EMAIL",
-  "invoiceNumber":"RE-2026-099",
-  "fileName":     "rechnung_april.pdf"
-}
-```
-
-Der Betrag im Zahlungsauftrag ist immer `amountGross`. Die genaue Feldzuordnung (welche Variable in welchen Service-Task geht) steht in [`worker/BPMN_VERTRAG.md`](worker/BPMN_VERTRAG.md).
-
-## Gespeicherte Dateien
-
-Der Ordner `Rechnungsdaten/` wird automatisch angelegt. Darin liegt nach einem Durchlauf:
-
-- `<invoiceId>.json` — die Rechnungsmetadaten, die der gRPC-Service gespeichert hat
-- `zahlungslog.json` — das Protokoll des Zahlungssystems, wird bei jeder Zahlung erweitert
-- `<invoiceId>_abschluss.json` — die Abschlussdatei, die der Worker beim Archivieren schreibt
-
-Das Statusprotokoll sieht so aus:
-
-```json
-[
-  {
-    "invoiceId": "INV-2026-001",
-    "status":    "BEZAHLT",
-    "zeitpunkt": "2026-04-10T08:01:00Z",
-    "betrag":    1190.50,
-    "waehrung":  "EUR"
-  }
-]
-```
-
-## Umgebungsvariablen
-
-Ohne Konfiguration funktioniert alles mit den Standardwerten. Für andere Setups:
-
-
-| Variable         | Standard                        | Beschreibung                        |
-| ---------------- | ------------------------------- | ----------------------------------- |
-| `ZEEBE_ADRESSE`  | `localhost:26500`               | Adresse des Zeebe-Gateways (Worker) |
-| `GRPC_ADRESSE`   | `localhost:50051`               | Adresse des gRPC-Service            |
-| `GRPC_ZEITLIMIT` | `5`                             | gRPC-Zeitlimit in Sekunden          |
-| `BROKER_ADRESSE` | `amqp://admin:admin@localhost/` | RabbitMQ-Verbindung                 |
-
-## RabbitMQ-Verwaltungsoberfläche
-
-Unter `http://localhost:15672` gibt es eine grafische Oberfläche (Benutzer: `admin`, Passwort: `admin`). Dort ist die Warteschlange `zahlungsauftraege` mit der Anzahl wartender Nachrichten sichtbar.
+---
 
 ## Tests
 
+Kein laufendes System erforderlich — alle Services werden gemockt:
+
 ```bash
-python -m pytest grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/ worker/src/tests/ -v
+python -m pytest worker/src/tests/ grpc-service/tests/ client/src/tests/ zahlungssystem/src/tests/ -v
 ```
 
-68 Tests, kein laufender Service nötig gRPC, RabbitMQ und Zeebe werden simuliert.
+---
 
+## Ports
 
-| Testdatei                                   | Tests | Inhalt                                                                                                                                  |
-| ------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `grpc-service/tests/test_server.py`         | 7     | Speichern, Datei anlegen, leere ID, Leerzeichen-ID, doppelte ID, Abrufen, nicht gefunden                                                |
-| `client/src/tests/test_grpc_client.py`      | 6     | Erfolg, Kanal schließen, Server weg, Timeout, ungültige Eingabe,`success=False`                                                       |
-| `client/src/tests/test_payment_producer.py` | 7     | Auftragsfelder, bestätigte ID, Bruttobetrag, Warteschlange, Persistenz, Verbindung schließen, Verbindungsfehler                       |
-| `zahlungssystem/src/tests/test_consumer.py` | 7     | Bestätigung, Ausgabe, NACK bei JSON-Fehler, NACK bei fehlendem Feld, NACK bei negativem Betrag, Eintrag schreiben, Einträge anhängen |
-| `worker/src/tests/test_grpc_mapping.py`     | 12    | Variablen→Proto-Mapping, Pflichtfelder, Betragsprüfung, nur Proto-Felder                                                              |
-| `worker/src/tests/test_grpc_handler.py`     | 8     | Erfolg, Fehlerklassifizierung (BusinessError vs. Retry), Null-Guard                                                                     |
-| `worker/src/tests/test_payment_mapping.py`  | 10    | Variablen→Zahlungsauftrag, Pflichtfelder, positiver Betrag, optionale Felder                                                           |
-| `worker/src/tests/test_payment_handler.py`  | 5     | Erfolg, AMQP-Fehler→Retry, Job-Variablen                                                                                               |
-| `worker/src/tests/test_archive_handler.py`  | 6     | Abschlussdatei schreiben, Null-Guard, OSError→Retry                                                                                    |
+| Port | Dienst |
+|------|--------|
+| 26500 | Zeebe gRPC Gateway |
+| 9600 | Zeebe Health (`/actuator/health`) |
+| 8081 | Camunda Operate |
+| 8082 | Camunda Tasklist |
+| 9200 | Elasticsearch |
+| 5672 | RabbitMQ AMQP |
+| 15672 | RabbitMQ Management |
+| 5678 | n8n |
+| 50051 | gRPC-Service |
+| 8090 | Lieferanten-Simulator (REST) |
 
+---
 
+## Projektstruktur
 
-`client/src/client.py` und `ui.py` sind die Standalone-Demo aus Sprint 1. Sie laufen nur, wenn man sie manuell startet, und werden vom Worker nicht benutzt  der Worker übernimmt die Orchestrierung. Zum reinen Testen von gRPC + RabbitMQ ohne Camunda funktionieren sie weiterhin.
-
-## gRPC-Schnittstelle
-
-Definition liegt in `grpc-service/src/proto/invoice.proto`:
-
-```protobuf
-service RechnungsService {
-  rpc SpeichereRechnungsmetadaten (Rechnungsmetadaten) returns (SpeicherAntwort);
-  rpc HoleRechnungsmetadaten      (RechnungsAnfrage)   returns (Rechnungsmetadaten);
-}
+```
+DVG/
+├── BPMN/
+│   ├── G7_Rechnungsfreigabe_with_AI.bpmn   aktuelles Prozessmodell (Sprint 6)
+│   └── Forms/                               Camunda User-Task-Formulare + DMN
+├── worker/src/
+│   ├── worker.py                            pyzeebe Worker (Einstiegspunkt)
+│   └── handlers/                            ein Handler pro Service-Task
+├── grpc-service/src/
+│   ├── server.py                            Metadaten-Speicher via gRPC
+│   └── proto/invoice.proto                  Schnittstellendefinition
+├── zahlungssystem/src/
+│   └── consumer.py                          RabbitMQ-Consumer (Zahlungsabwicklung)
+├── client/src/                              Standalone-Demo Sprint 1 (optional)
+├── n8n/workflows/
+│   └── sprint6_ai_extraction.json           n8n Workflow für Gemini-Extraktion
+├── scripts/                                 Start / Stop / Install / Deploy
+├── Rechnungsdaten/                          Laufzeitdaten — nicht im Repo
+├── docs/                                    Sprint-Dokumentation
+├── docker-compose.yml                       Infrastruktur
+├── plattform.txt                            "windows" oder "mac"
+└── .env                                     API-Keys — nicht im Repo
 ```
 
-`SpeichereRechnungsmetadaten` speichert eine Rechnung und gibt die bestätigte Rechnungs-ID zurück. Leere Rechnungs-ID bekommt `INVALID_ARGUMENT` zurück.
+---
 
-`HoleRechnungsmetadaten` liest eine gespeicherte Rechnung anhand der ID. Existiert sie nicht, kommt `NOT_FOUND`.
+## Häufige Probleme
+
+**Zeebe startet nicht**
+```bash
+docker compose logs zeebe
+# Elasticsearch muss zuerst healthy sein:
+docker compose logs elasticsearch
+```
+
+**`ModuleNotFoundError: invoice_pb2`**
+
+gRPC-Stubs noch nicht generiert → Befehl aus Schritt 4 ausführen.
+
+**Worker meldet `ERR_AI_EXTRACTION`**
+
+n8n-Workflow ist nicht aktiv → Schritt 6 (Workflow importieren und aktivieren) prüfen.
+
+**Gemini gibt 429 zurück**
+
+Free-Tier-Limit erreicht. Kurz warten (ca. 1 Minute) und erneut versuchen.
+
+**Worker findet `.env` nicht**
+
+Die `.env` muss im Projektordner liegen (neben `docker-compose.yml`), nicht in `worker/`. Der Worker lädt sie beim Start automatisch.

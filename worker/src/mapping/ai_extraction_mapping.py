@@ -1,29 +1,13 @@
-"""Datenvertrag zwischen der n8n/LLM-AI-Extraktion (Sprint 6) und dem Camunda-Prozess.
+"""Mapping und Validierung für AI-extrahierte Rechnungsdaten (n8n/LLM).
 
-Ueberbrueckt zwei Dinge:
-
-1. pruefe_plausibilitaet() bewertet das AI-Extraction-JSON (Pflichtfelder,
-   Confidence pro Feld, Betragsplausibilitaet, Waehrungsformat) und liefert
-   "VALID" oder "NEEDS_REVIEW" plus eine Liste lesbarer Gruende fuer das
-   Human-Review-Formular. Das ist eine fachliche Routing-Entscheidung,
-   deshalb wirft die Funktion bei unsicheren/fehlenden Daten bewusst KEINEN
-   Fehler (anders als grpc_mapping.py, das von bereits geprueften Daten
-   ausgeht).
-
-2. ai_daten_zu_prozessvariablen() bildet das AI-JSON auf dieselben
-   Prozessvariablennamen ab, die grpc_mapping.EINGABE_PFLICHT erwartet
-   (vorher durch pdf_handler.py befuellt), damit der bestehende
-   gRPC-Mapping-Schritt unveraendert weiterlaufen kann.
-
-MappingFehler wird nur bei strukturell ungueltigem Input geworfen (z.B.
-ai_daten ist kein Objekt) - das ist ein Integrationsfehler, keine
-Plausibilitaetsfrage.
+Setzt die Anforderungen aus Sprint 6 Vorgang 4 um (Datenvertrag zwischen n8n und Camunda).
 """
-from typing import Any, Dict, List, Optional, Tuple
+import json
+import re
+from typing import Any, Dict, List, Tuple
 
-# Pflichtfelder im AI-Extraction-JSON (Analogie zu den Pflichtfeldern,
-# die bisher pdf_handler._extrahiere_daten_aus_text per Regex lieferte).
-AI_PFLICHTFELDER = [
+# Pflichtfelder laut Datenvertrag
+PFLICHTFELDER = [
     "invoiceId",
     "invoiceNumber",
     "supplierName",
@@ -34,125 +18,129 @@ AI_PFLICHTFELDER = [
     "billingAddress",
 ]
 
-# Optionale Felder, die durchgereicht werden, wenn vorhanden.
-AI_OPTIONALE_FELDER = ["dueDate", "amountNet"]
-
-CONFIDENCE_SCHWELLE = 0.85
-
-STATUS_VALID = "VALID"
-STATUS_NEEDS_REVIEW = "NEEDS_REVIEW"
-
 
 class MappingFehler(ValueError):
-    """Wird geworfen, wenn das AI-Extraction-JSON strukturell ungueltig ist."""
+    """Wird geworfen, wenn die AI-Ausgabe strukturell beschädigt ist."""
+    pass
 
 
-def pruefe_plausibilitaet(ai_daten: Dict[str, Any]) -> Tuple[str, List[str]]:
-    """Bewertet das AI-Extraction-JSON und liefert (status, gruende).
+def pruefe_plausibilitaet(daten: Dict[str, Any], confidence_schwelle: float = 0.85) -> Tuple[str, List[str]]:
+    """Prüft die Plausibilität der AI-extrahierten Daten.
 
-    status ist STATUS_VALID oder STATUS_NEEDS_REVIEW. gruende ist eine Liste
-    lesbarer Texte (leer bei VALID), die im Human-Review-Formular angezeigt
-    werden koennen.
+    Regeln:
+    1. Alle Pflichtfelder müssen vorhanden und nicht leer sein.
+    2. Für jedes Pflichtfeld muss ein Confidence-Wert vorhanden und >= confidence_schwelle sein.
+    3. Beträge (amountGross, amountNet falls vorhanden) müssen numerisch, nicht negativ und amountGross >= amountNet sein.
+    4. Die Währung (currency) muss ein gültiges 3-Buchstaben-Format sein (z.B. EUR).
     """
-    _pruefe_struktur(ai_daten)
+    if not isinstance(daten, dict):
+        raise MappingFehler("Die Eingabedaten müssen ein JSON-Objekt (Dict) sein.")
 
-    confidence = ai_daten.get("confidence", {})
-    if not isinstance(confidence, dict):
-        confidence = {}
+    reasons: List[str] = []
 
-    gruende: List[str] = []
-
-    for feld in AI_PFLICHTFELDER:
-        if feld not in ai_daten or _ist_leer(ai_daten[feld]):
-            gruende.append(f"Pflichtfeld fehlt: {feld}")
+    # 1. Pflichtfelder vorhanden und nicht leer prüfen
+    for feld in PFLICHTFELDER:
+        wert = daten.get(feld)
+        if wert is None or (isinstance(wert, str) and not wert.strip()):
+            reasons.append(f"Pflichtfeld '{feld}' fehlt oder ist leer.")
             continue
-        feld_confidence = confidence.get(feld)
-        if feld_confidence is None:
-            gruende.append(f"Keine Confidence-Angabe fuer Pflichtfeld: {feld}")
-        elif not isinstance(feld_confidence, (int, float)) or feld_confidence < CONFIDENCE_SCHWELLE:
-            gruende.append(
-                f"Confidence zu niedrig fuer {feld}: {feld_confidence!r} < {CONFIDENCE_SCHWELLE}"
-            )
 
-    gruende.extend(_pruefe_betraege_plausibilitaet(ai_daten))
+        # 2. Confidence prüfen (nur wenn das Feld überhaupt vorhanden ist)
+        confidence_dict = daten.get("confidence")
+        if not isinstance(confidence_dict, dict):
+            reasons.append(f"Confidence-Objekt fehlt oder ist kein Dictionary.")
+            # Falls kein dict da ist, werten wir alle als fehlende confidence
+            for f in PFLICHTFELDER:
+                reasons.append(f"Confidence für Feld '{f}' fehlt.")
+            break
 
-    if "currency" in ai_daten and not _ist_leer(ai_daten["currency"]):
-        waehrung = str(ai_daten["currency"]).strip()
-        if len(waehrung) != 3 or not waehrung.isalpha():
-            gruende.append(f"Waehrung hat kein gueltiges 3-Buchstaben-Format: {waehrung!r}")
+        conf_value = confidence_dict.get(feld)
+        if conf_value is None:
+            reasons.append(f"Confidence für Feld '{feld}' fehlt.")
+        else:
+            try:
+                conf_float = float(conf_value)
+                if conf_float < confidence_schwelle:
+                    reasons.append(f"Confidence für Feld '{feld}' ({conf_float:.2f}) liegt unter der Schwelle ({confidence_schwelle:.2f}).")
+            except (ValueError, TypeError):
+                reasons.append(f"Confidence für Feld '{feld}' ist kein gültiger Float-Wert: {conf_value!r}.")
 
-    status = STATUS_NEEDS_REVIEW if gruende else STATUS_VALID
-    return status, gruende
+    # 3. Beträge prüfen
+    amount_gross_raw = daten.get("amountGross")
+    amount_gross = None
+    if amount_gross_raw is not None and amount_gross_raw != "":
+        try:
+            amount_gross = float(amount_gross_raw)
+            if amount_gross < 0:
+                reasons.append("amountGross darf nicht negativ sein.")
+            if amount_gross != amount_gross or amount_gross in (float("inf"), float("-inf")):
+                reasons.append("amountGross ist kein gültiger Float-Wert.")
+                amount_gross = None
+        except (ValueError, TypeError):
+            reasons.append(f"amountGross ist nicht numerisch: {amount_gross_raw!r}.")
+
+    amount_net_raw = daten.get("amountNet")
+    amount_net = None
+    if amount_net_raw is not None and amount_net_raw != "":
+        try:
+            amount_net = float(amount_net_raw)
+            if amount_net < 0:
+                reasons.append("amountNet darf nicht negativ sein.")
+            if amount_net != amount_net or amount_net in (float("inf"), float("-inf")):
+                reasons.append("amountNet ist kein gültiger Float-Wert.")
+                amount_net = None
+        except (ValueError, TypeError):
+            reasons.append(f"amountNet ist nicht numerisch: {amount_net_raw!r}.")
+
+    if amount_gross is not None and amount_net is not None:
+        if amount_gross < amount_net:
+            reasons.append(f"amountGross ({amount_gross}) darf nicht kleiner sein als amountNet ({amount_net}).")
+
+    # 4. Währung prüfen
+    currency = daten.get("currency")
+    if currency:
+        if not isinstance(currency, str) or not re.match(r"^[A-Z]{3}$", currency):
+            reasons.append(f"Währung '{currency}' entspricht nicht dem 3-Buchstaben-ISO-Format (z.B. EUR).")
+
+    # Ergebnis bestimmen
+    status = "NEEDS_REVIEW" if reasons else "VALID"
+    return status, reasons
 
 
-def ai_daten_zu_prozessvariablen(ai_daten: Dict[str, Any]) -> Dict[str, Any]:
-    """Bildet das AI-Extraction-JSON auf Camunda-Prozessvariablen ab.
+def ai_daten_zu_prozessvariablen(daten: Dict[str, Any]) -> Dict[str, Any]:
+    """Transformiert extrahierte AI-Daten in Camunda-Prozessvariablen.
 
-    Verwendet dieselben Feldnamen wie grpc_mapping.EINGABE_PFLICHT, damit das
-    Ergebnis ohne weitere Umbenennung an variablen_zu_rechnung() weitergegeben
-    werden kann. Ergaenzt aiPlausibilityStatus/aiReviewGruende fuer das neue
-    Gateway im BPMN-Prozess.
+    Führt die Plausibilitätsprüfung aus und setzt `aiPlausibilityStatus` und `aiReviewGruende`.
     """
-    _pruefe_struktur(ai_daten)
+    if not isinstance(daten, dict):
+        raise MappingFehler("Die Eingabedaten müssen ein JSON-Objekt (Dict) sein.")
 
-    status, gruende = pruefe_plausibilitaet(ai_daten)
+    status, reasons = pruefe_plausibilitaet(daten)
 
-    variablen: Dict[str, Any] = {"channel": "EMAIL"}
-    for feld in AI_PFLICHTFELDER + AI_OPTIONALE_FELDER:
-        if feld in ai_daten and not _ist_leer(ai_daten[feld]):
-            variablen[feld] = ai_daten[feld]
+    # Basisvariablen kopieren
+    prozess_variablen = {}
+    for key, value in daten.items():
+        if key != "confidence":
+            prozess_variablen[key] = value
 
-    if ai_daten.get("invoiceItems"):
-        variablen["invoiceItems"] = ai_daten["invoiceItems"]
+    # Zusätzliche Variablen
+    prozess_variablen["channel"] = "EMAIL"
+    prozess_variablen["fileName"] = daten.get("sourceFile") or ""
+    prozess_variablen["aiPlausibilityStatus"] = status
+    prozess_variablen["aiReviewGruende"] = ", ".join(reasons) if reasons else ""
 
-    if not _ist_leer(ai_daten.get("sourceFile")):
-        variablen["fileName"] = ai_daten["sourceFile"]
+    # invoiceItems normalisieren: dynamiclist in Camunda Forms erwartet ein Array
+    raw_items = prozess_variablen.get("invoiceItems", [])
+    if isinstance(raw_items, str):
+        try:
+            parsed = json.loads(raw_items)
+            if isinstance(parsed, list):
+                prozess_variablen["invoiceItems"] = parsed
+            else:
+                prozess_variablen["invoiceItems"] = []
+        except Exception:
+            prozess_variablen["invoiceItems"] = []
+    elif not isinstance(raw_items, list):
+        prozess_variablen["invoiceItems"] = []
 
-    variablen["aiPlausibilityStatus"] = status
-    variablen["aiReviewGruende"] = gruende
-    return variablen
-
-
-def _pruefe_struktur(ai_daten: Any) -> None:
-    if not isinstance(ai_daten, dict):
-        raise MappingFehler(
-            f"AI-Extraction-JSON muss ein Objekt sein, war: {type(ai_daten).__name__}"
-        )
-
-
-def _pruefe_betraege_plausibilitaet(ai_daten: Dict[str, Any]) -> List[str]:
-    gruende: List[str] = []
-    gross = _zu_float_oder_none(ai_daten.get("amountGross"))
-    net = _zu_float_oder_none(ai_daten.get("amountNet"))
-
-    if not _ist_leer(ai_daten.get("amountGross")) and gross is None:
-        gruende.append(f"amountGross ist nicht numerisch: {ai_daten.get('amountGross')!r}")
-    elif gross is not None and gross < 0:
-        gruende.append(f"amountGross ist negativ: {gross}")
-
-    if not _ist_leer(ai_daten.get("amountNet")) and net is None:
-        gruende.append(f"amountNet ist nicht numerisch: {ai_daten.get('amountNet')!r}")
-    elif net is not None and net < 0:
-        gruende.append(f"amountNet ist negativ: {net}")
-
-    if gross is not None and net is not None and gross < net:
-        gruende.append(f"amountGross ({gross}) ist kleiner als amountNet ({net})")
-
-    return gruende
-
-
-def _ist_leer(wert: Any) -> bool:
-    if wert is None:
-        return True
-    if isinstance(wert, str) and wert.strip() == "":
-        return True
-    return False
-
-
-def _zu_float_oder_none(wert: Any) -> Optional[float]:
-    if wert is None:
-        return None
-    try:
-        return float(wert)
-    except (TypeError, ValueError):
-        return None
+    return prozess_variablen

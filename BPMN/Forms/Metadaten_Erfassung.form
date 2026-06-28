@@ -1,12 +1,4 @@
 {
-  "executionPlatform": "Camunda Cloud",
-  "executionPlatformVersion": "8.6.0",
-  "exporter": {
-    "name": "Camunda Web Modeler",
-    "version": "1d3193f"
-  },
-  "schemaVersion": 19,
-  "id": "Form_MetadatenErfassung",
   "components": [
     {
       "text": "### Rechnungsmetadaten erfassen\nBitte alle Pflichtfelder (*) aus der Rechnung übertragen.",
@@ -38,7 +30,7 @@
       "validate": {
         "required": true
       },
-      "disabled": true
+      "disabled": false
     },
     {
       "label": "Rechnungsnummer *",
@@ -191,14 +183,6 @@
     },
     {
       "label": "Rechnungspositionen",
-      "type": "dynamiclist",
-      "layout": {
-        "row": "Row_8"
-      },
-      "id": "Field_invoiceItems",
-      "isReorderable": true,
-      "allowAdd": true,
-      "allowRemove": true,
       "components": [
         {
           "label": "Beschreibung",
@@ -247,8 +231,28 @@
           "key": "totalPrice"
         }
       ],
+      "showOutline": true,
+      "isRepeating": true,
+      "allowAddRemove": true,
+      "defaultRepetitions": 1,
+      "type": "dynamiclist",
+      "layout": {
+        "row": "Row_8"
+      },
+      "id": "Field_invoiceItems",
+      "isReorderable": true,
+      "allowAdd": true,
+      "allowRemove": true,
       "path": "invoiceItems"
     }
   ],
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "schemaVersion": 19,
+  "id": "Form_MetadatenErfassung",
   "type": "default"
 }

@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableExtensions EnableDelayedExpansion
 rem Startup script for DVG Invoice Approval System on Windows
 rem Entspricht start_all.sh fuer macOS
 

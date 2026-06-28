@@ -27,7 +27,7 @@ Fachliche Fehler (ungültige Daten, Duplikate) wirft der Worker als BPMN-`Busine
 Abhängigkeiten installieren:
 
 ```bash
-pip install grpcio grpcio-tools pika pyzeebe pytest pytest-asyncio
+pip install grpcio grpcio-tools pika pyzeebe reportlab pytest pytest-asyncio
 ```
 
 Proto-Stubs generieren — das muss einmalig gemacht werden, und wieder wenn sich `invoice.proto` ändert:

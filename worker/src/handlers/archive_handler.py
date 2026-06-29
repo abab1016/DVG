@@ -16,16 +16,16 @@ from typing import Any, Dict
 
 from pyzeebe.errors import BusinessError
 
+from failure_injection import raise_if_failure_enabled
+
 _PRODUKTIONSWURZEL = Path(__file__).resolve().parent.parent.parent.parent
 _ARCHIV_ORDNER = _PRODUKTIONSWURZEL / "Rechnungsdaten"
 
 JOB_TYPE_ARCHIVIEREN = "archive-invoice"
 JOB_TIMEOUT_MS = 30_000
 
-# Hinweis: Im BPMN (Rechnungsfreigabe_27.5) hat der Archivierungs-Task KEINE
-# Error-Boundary. Diese BusinessError wird daher von Zeebe nicht abgefangen und
-# erzeugt einen Incident in Operate. Das ist die korrekte Reaktion auf einen
-# Daten-Fehler, der an dieser Stelle nicht mehr auftreten sollte (Safety-Net).
+# Der Error-Code wird im aktuellen AI-BPMN vom Boundary Event am
+# Archivierungs-Task gefangen und fuehrt zur manuellen Archivierung.
 ERROR_CODE_ARCHIVE = "ERR_ARCHIVE"
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,8 @@ async def handle_archivieren(**variablen: Any) -> Dict[str, Any]:
     invoice_id = str(invoice_id).strip()
     logger.info("[%s] Archivierung gestartet fuer Rechnung %s",
                 JOB_TYPE_ARCHIVIEREN, invoice_id)
+
+    raise_if_failure_enabled("archive")
 
     abschluss = {
         "invoiceId": invoice_id,

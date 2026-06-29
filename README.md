@@ -167,6 +167,45 @@ Die KI-Extraktion läuft über n8n. Der Workflow muss einmal manuell importiert 
 
 ---
 
+## BPMN-Fallbacks mit Komponentenausfällen testen
+
+Für jeden technischen BPMN-Schritt mit einem modellierten Error-Boundary gibt
+es ein eigenes Ausfallskript. Die Skripte beenden keine realen Dienste, sondern
+aktivieren einen Laufzeitmarker. Der laufende Worker erkennt Änderungen ohne
+Neustart, führt die im BPMN konfigurierte Anzahl Versuche aus und wechselt dann
+in den zugehörigen manuellen Task.
+
+| Komponente | Windows | macOS | Versuche | Manueller Fallback |
+| --- | --- | --- | ---: | --- |
+| AI / n8n | `scripts\ai_failure.bat` | `./scripts/ai_failure.sh` | 1 | Metadaten manuell erfassen |
+| gRPC | `scripts\grpc_failure.bat` | `./scripts/grpc_failure.sh` | 3 | Metadaten manuell speichern |
+| UiPath / ERP | `scripts\erp_failure.bat` | `./scripts/erp_failure.sh` | 1 | Rechnung manuell im ERP erfassen |
+| RabbitMQ-Zahlung | `scripts\rabbitmq_failure.bat` | `./scripts/rabbitmq_failure.sh` | 3 | Zahlung manuell erfassen |
+| Archivierung | `scripts\archive_failure.bat` | `./scripts/archive_failure.sh` | 3 | Rechnung manuell archivieren |
+
+Jedes Skript unterstützt `fail`, `restore` und `status`. Ohne Argument wird ein
+kleines Menü angezeigt:
+
+```powershell
+scripts\rabbitmq_failure.bat fail
+scripts\rabbitmq_failure.bat status
+scripts\rabbitmq_failure.bat restore
+```
+
+```bash
+./scripts/rabbitmq_failure.sh fail
+./scripts/rabbitmq_failure.sh status
+./scripts/rabbitmq_failure.sh restore
+```
+
+Ein aktivierter Ausfall bleibt bestehen, bis dasselbe Skript mit `restore`
+aufgerufen wird. Vor einem weiteren Demo-Szenario deshalb den Status prüfen und
+nicht mehr benötigte Ausfälle wiederherstellen. Compliance-DMN und
+Lieferanten-Rückfrage besitzen im aktuellen BPMN keinen manuellen Fehlerpfad
+und werden bewusst nicht über diese Skripte abgeschaltet.
+
+---
+
 ## Prozess auslösen
 
 Sobald alles läuft, einen neuen Rechnungsprozess starten:

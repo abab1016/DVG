@@ -10,6 +10,7 @@ from typing import Any, Dict
 
 from pyzeebe.errors import BusinessError
 
+from failure_injection import raise_if_failure_enabled
 from mapping.ai_extraction_mapping import ai_daten_zu_prozessvariablen
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,8 @@ async def handle_ai_extraction(**variablen: Any) -> Dict[str, Any]:
     if not file_name:
         logger.warning("[%s] Kein Dateiname angegeben.", JOB_TYPE_AI_EXTRACTION)
         raise BusinessError(ERROR_CODE_AI, "Kein Dateiname in Prozessvariablen angegeben.")
+
+    raise_if_failure_enabled("ai")
 
     logger.info("[%s] Starte AI-Extraktion für Datei: %s", JOB_TYPE_AI_EXTRACTION, file_name)
 

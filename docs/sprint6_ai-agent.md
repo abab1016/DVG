@@ -154,16 +154,9 @@ Das Formular in [Metadaten_Erfassung.form](../BPMN/Forms/Metadaten_Erfassung.for
 
 ---
 
-## 7. Persönliche Lernzusammenfassung (Abu)
-
-### 7.1 Technische Reflexion & Architektur-Erkenntnisse
-Die Integration von AI-Agents in deterministische Geschäftsprozesse (wie Camunda BPMN) hat mir verdeutlicht, wie wichtig eine strikte Entkopplung und ein klarer Datenvertrag sind. 
-Die Kernherausforderung bei LLMs ist deren stochastische Natur (Nicht-Determinismus). Indem wir n8n als flexible Vorverarbeitungs- und Strukturierungsschicht einsetzen, können wir rohen Text in ein standardisiertes JSON überführen.
-Besonders wertvoll war das Konzept des "Confidence-Scores". Anstatt blind auf die LLM-Ausgabe zu vertrauen, zwingt der Prompt das Modell dazu, seine eigene Sicherheit zu bewerten. Unsere im Zeebe-Worker implementierte Plausibilitätslogik fungiert als Gatekeeper: Erst ab einer Confidence von 85 % erlauben wir eine Dunkelverarbeitung. Das ist ein extrem praxistauglicher Hybrid-Ansatz ("Human-in-the-Loop"), der die Prozessgeschwindigkeit maximiert, ohne das Risiko von Fehlbuchungen zu erhöhen.
-
-### 7.2 Hürden & Lösungsansätze
+### 7.1 Hürden & Lösungsansätze
 Eine technische Hürde war die Anbindung von OpenRouter innerhalb des Docker-Netzwerks. Da n8n im Container läuft und der Worker auf dem Host, mussten die Netzwerkpfade und Dateizugriffe präzise gemountet werden. Durch das Binden von `./Rechnungsdaten` an `/data` im Container konnte n8n direkt auf die PDFs zugreifen.
 Ein weiteres Problem war die Zuverlässigkeit der JSON-Ausgabe des Modells. Obwohl modernere Modelle wie `gemini-2.5-flash` JSON-Modus unterstützen, kam es bei komplexeren Strukturen oder gemischten Währungsformaten zu Abweichungen. Die Implementierung einer separaten Bereinigungsstufe im n8n-Code-Node und die robuste Typkonvertierung im Python-Worker haben dieses Problem erfolgreich gelöst.
 
-### 7.3 Fazit
+### 7.2 Fazit
 Die Kombination aus flexiblen Integrationsplattformen (n8n), modernen LLMs (Gemini/OpenRouter) und robusten Workflow-Engines (Camunda) stellt die Zukunft der Hyperautomatisierung dar. Der Prototyp demonstriert eindrucksvoll, wie traditionelle RPA-Ansätze und moderne KI-Lösungen Hand in Hand arbeiten können, um Medienbrüche elegant aufzulösen.

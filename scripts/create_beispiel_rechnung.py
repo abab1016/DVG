@@ -68,13 +68,13 @@ def erstelle_pdf(counter: int, dateiname: str = None) -> str:
     c.drawString(50, 690, "DVG Lieferant GmbH - Hauptstraße 12 - 12345 Berlin")
     c.line(50, 685, 250, 685)
     
-    # Recipient Address Box
+    # Recipient Address Box: genau eine, widerspruchsfreie Rechnungsadresse.
     c.setFont("Helvetica", 10)
     c.setFillColorRGB(0, 0, 0)
-    c.drawString(50, 670, f"Rechnungsadresse: Hauptstrasse {counter}, 12345 Berlin")
+    c.drawString(50, 670, "Rechnungsadresse:")
     c.drawString(50, 650, "Musterkunde AG")
     c.drawString(50, 635, "Finanzabteilung")
-    c.drawString(50, 620, "Hauptstraße 12")
+    c.drawString(50, 620, f"Hauptstrasse {counter}")
     c.drawString(50, 605, "12345 Berlin")
     
     # Invoice Metadata (Right side info block)

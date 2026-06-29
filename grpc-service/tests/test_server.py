@@ -96,23 +96,23 @@ def test_rechnung_speichern_leere_adresse(tmp_path, monkeypatch):
     assert "Rechnungsadresse" in kontext.meldung
 
 
-def test_rechnung_speichern_doppelte_adresse(tmp_path, monkeypatch):
+def test_rechnung_speichern_gleiche_adresse_andere_id_erlaubt(tmp_path, monkeypatch):
     monkeypatch.setattr("server.SPEICHER", tmp_path)
     dienst = RechnungsService()
 
-    # Erste speichern
     dienst.SpeichereRechnungsmetadaten(TESTRECHNUNG, ScheinKontext())
 
-    # Zweite speichern mit gleicher Adresse, aber anderer ID
     rechnung2 = invoice_pb2.Rechnungsmetadaten(
         invoiceId="INV-TEST-002",
         billingAddress="Test Street 1, 12345 City",
     )
     kontext = ScheinKontext()
-    dienst.SpeichereRechnungsmetadaten(rechnung2, kontext)
+    antwort = dienst.SpeichereRechnungsmetadaten(rechnung2, kontext)
 
-    assert kontext.statuscode == grpc.StatusCode.ALREADY_EXISTS
-    assert "doppelt" in kontext.meldung
+    assert kontext.statuscode is None
+    assert antwort.success is True
+    assert antwort.invoiceId == "INV-TEST-002"
+    assert (tmp_path / "INV-TEST-002.json").exists()
 
 
 def test_rechnung_speichern_doppelte_id(tmp_path, monkeypatch):

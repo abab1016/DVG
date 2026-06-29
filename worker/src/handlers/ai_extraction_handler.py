@@ -59,6 +59,12 @@ async def handle_ai_extraction(**variablen: Any) -> Dict[str, Any]:
         
         if isinstance(response_json, list) and len(response_json) > 0:
             response_json = response_json[0]
+        if not isinstance(response_json, dict):
+            raise ValueError("n8n-Antwort ist kein JSON-Objekt.")
+
+        # Der angefragte Dateiname ist vertrauenswürdiger als ein vom Modell
+        # zurückgelieferter sourceFile-Wert und ermöglicht Konsistenzprüfungen.
+        response_json["sourceFile"] = file_name
             
         logger.info("[%s] AI-Extraktion erfolgreich von n8n zurückerhalten.", JOB_TYPE_AI_EXTRACTION)
         

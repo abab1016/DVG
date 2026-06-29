@@ -104,6 +104,26 @@ def test_invalid_currency_format():
     assert any("currency" in r or "Währung" in r for r in reasons)
 
 
+def test_invoice_id_muss_zum_demo_dateinamen_passen():
+    data = valid_ai_data()
+    data["invoiceId"] = "INV-2026-999"
+
+    status, reasons = pruefe_plausibilitaet(data)
+
+    assert status == "NEEDS_REVIEW"
+    assert any("Dateinamen" in reason and "INV-2026-140" in reason for reason in reasons)
+
+
+def test_beliebiger_dateiname_erzwingt_keine_invoice_id():
+    data = valid_ai_data()
+    data["sourceFile"] = "eingangsrechnung-kunde.pdf"
+
+    status, reasons = pruefe_plausibilitaet(data)
+
+    assert status == "VALID"
+    assert reasons == []
+
+
 def test_structural_failure():
     with pytest.raises(MappingFehler):
         pruefe_plausibilitaet("not-a-dict")

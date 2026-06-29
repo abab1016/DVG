@@ -102,6 +102,21 @@ def pruefe_plausibilitaet(daten: Dict[str, Any], confidence_schwelle: float = 0.
         if not isinstance(currency, str) or not re.match(r"^[A-Z]{3}$", currency):
             reasons.append(f"Währung '{currency}' entspricht nicht dem 3-Buchstaben-ISO-Format (z.B. EUR).")
 
+    # Bei den automatisch erzeugten Demo-Rechnungen trägt der Dateiname die
+    # erwartete Rechnungs-ID. Abweichungen deuten auf eine Halluzination oder
+    # die Verarbeitung der falschen Datei hin und müssen ins Human Review.
+    source_file = daten.get("sourceFile")
+    if isinstance(source_file, str):
+        match = re.fullmatch(r"(INV-[A-Za-z0-9-]+)\.pdf", source_file.strip(), re.IGNORECASE)
+        if match:
+            erwartete_id = match.group(1)
+            extrahierte_id = str(daten.get("invoiceId", "")).strip()
+            if extrahierte_id.casefold() != erwartete_id.casefold():
+                reasons.append(
+                    f"invoiceId '{extrahierte_id}' passt nicht zum Dateinamen "
+                    f"'{source_file}' (erwartet: '{erwartete_id}')."
+                )
+
     # Ergebnis bestimmen
     status = "NEEDS_REVIEW" if reasons else "VALID"
     return status, reasons

@@ -45,7 +45,7 @@ async def test_ai_extraction_handler_success():
     mock_urlopen.assert_called_once()
     assert ergebnis["aiPlausibilityStatus"] == "VALID"
     assert ergebnis["invoiceId"] == "INV-2026-140"
-    assert ergebnis["fileName"] == "INV-2026-140.pdf"
+    assert ergebnis["fileName"] == "beispiel_rechnung.pdf"
     assert ergebnis["channel"] == "EMAIL"
     assert ergebnis["aiReviewGruende"] == ""
 

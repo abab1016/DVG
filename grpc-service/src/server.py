@@ -23,25 +23,12 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
             context.set_details("Rechnungsadresse darf nicht leer sein.")
             return invoice_pb2.SpeicherAntwort()
 
-        # Duplikatsprüfung: gleiche Rechnungsadresse = doppelte Einreichung
-        try:
-            for pfad in SPEICHER.glob("*.json"):
-                try:
-                    inhalt = json.loads(pfad.read_text(encoding="utf-8"))
-                    is_same_address = inhalt.get("billingAddress", "").strip() == request.billingAddress.strip()
-
-                    if is_same_address and request.billingAddress.strip():
-                        context.set_code(grpc.StatusCode.ALREADY_EXISTS)
-                        context.set_details(
-                            f"Rechnung doppelt eingereicht: Rechnungsadresse '{request.billingAddress}' "
-                            f"existiert bereits (Rechnung {inhalt.get('invoiceId', '?')})."
-                        )
-                        return invoice_pb2.SpeicherAntwort()
-                except Exception:
-                    pass
-        except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
+        # Mehrere Rechnungen an dieselbe Empfängeradresse sind fachlich normal.
+        # Eindeutig ist in diesem Service ausschließlich die Rechnungs-ID.
+        datei = SPEICHER / f"{request.invoiceId}.json"
+        if datei.exists():
+            context.set_code(grpc.StatusCode.ALREADY_EXISTS)
+            context.set_details(f"Rechnung {request.invoiceId} existiert bereits.")
             return invoice_pb2.SpeicherAntwort()
 
         items = []
@@ -71,11 +58,6 @@ class RechnungsService(invoice_pb2_grpc.RechnungsServiceServicer):
         }
 
         try:
-            datei = SPEICHER / f"{request.invoiceId}.json"
-            if datei.exists():
-                context.set_code(grpc.StatusCode.ALREADY_EXISTS)
-                context.set_details(f"Rechnung {request.invoiceId} existiert bereits.")
-                return invoice_pb2.SpeicherAntwort()
             datei.write_text(json.dumps(daten, indent=2), encoding="utf-8")
             print(f"[gRPC-Server] Gespeichert: {request.invoiceId}")
         except Exception as e:

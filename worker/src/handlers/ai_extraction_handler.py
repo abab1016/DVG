@@ -44,40 +44,45 @@ async def handle_ai_extraction(**variablen: Any) -> Dict[str, Any]:
     req.add_header("Content-Type", "application/json")
     req.add_header("Accept", "application/json")
 
-    try:
-        # Führe den HTTP-Call aus
-        # Da dies blockierend sein kann, führen wir es im default executor aus (was asyncio.to_thread macht)
-        # Aber da wir uns in einer async-Methode befinden, ist ein asynchroner Wrapper gut.
-        import asyncio
-        
-        def make_request():
-            with urllib.request.urlopen(req, timeout=45) as response:
-                return response.read().decode("utf-8")
+    import asyncio
 
-        response_body = await asyncio.to_thread(make_request)
-        response_json = json.loads(response_body)
-        
-        if isinstance(response_json, list) and len(response_json) > 0:
-            response_json = response_json[0]
-        if not isinstance(response_json, dict):
-            raise ValueError("n8n-Antwort ist kein JSON-Objekt.")
+    MAX_VERSUCHE = 3
+    letzter_fehler: Exception | None = None
 
-        # Der angefragte Dateiname ist vertrauenswürdiger als ein vom Modell
-        # zurückgelieferter sourceFile-Wert und ermöglicht Konsistenzprüfungen.
-        response_json["sourceFile"] = file_name
-            
-        logger.info("[%s] AI-Extraktion erfolgreich von n8n zurückerhalten.", JOB_TYPE_AI_EXTRACTION)
-        
-        # Mappe die AI-Daten auf die Prozessvariablen
-        prozess_variablen = ai_daten_zu_prozessvariablen(response_json)
-        return prozess_variablen
+    for versuch in range(1, MAX_VERSUCHE + 1):
+        try:
+            def make_request():
+                with urllib.request.urlopen(req, timeout=45) as response:
+                    return response.read().decode("utf-8")
 
-    except urllib.error.URLError as e:
-        logger.error("[%s] n8n-Verbindungsfehler für %s: %s", JOB_TYPE_AI_EXTRACTION, file_name, e)
-        raise BusinessError(ERROR_CODE_AI, f"Verbindung zu n8n fehlgeschlagen: {e.reason}")
-    except Exception as e:
-        logger.error("[%s] Unerwarteter Fehler bei AI-Extraktion für %s: %s", JOB_TYPE_AI_EXTRACTION, file_name, e)
-        raise BusinessError(ERROR_CODE_AI, f"Technischer Fehler bei AI-Extraktion: {str(e)}")
+            response_body = await asyncio.to_thread(make_request)
+            response_json = json.loads(response_body)
+
+            if isinstance(response_json, list) and len(response_json) > 0:
+                response_json = response_json[0]
+            if not isinstance(response_json, dict):
+                raise ValueError("n8n-Antwort ist kein JSON-Objekt.")
+
+            # Angefragter Dateiname ist vertrauenswürdiger als LLM-gelieferter sourceFile
+            response_json["sourceFile"] = file_name
+
+            logger.info("[%s] AI-Extraktion erfolgreich (Versuch %d/%d).", JOB_TYPE_AI_EXTRACTION, versuch, MAX_VERSUCHE)
+            prozess_variablen = ai_daten_zu_prozessvariablen(response_json)
+            return prozess_variablen
+
+        except urllib.error.URLError as e:
+            letzter_fehler = e
+            logger.warning("[%s] n8n-Verbindungsfehler (Versuch %d/%d): %s", JOB_TYPE_AI_EXTRACTION, versuch, MAX_VERSUCHE, e)
+        except Exception as e:
+            letzter_fehler = e
+            logger.warning("[%s] Fehler bei AI-Extraktion (Versuch %d/%d): %s", JOB_TYPE_AI_EXTRACTION, versuch, MAX_VERSUCHE, e)
+
+        if versuch < MAX_VERSUCHE:
+            await asyncio.sleep(3)
+
+    meldung = str(letzter_fehler)
+    logger.error("[%s] AI-Extraktion nach %d Versuchen fehlgeschlagen für %s: %s", JOB_TYPE_AI_EXTRACTION, MAX_VERSUCHE, file_name, meldung)
+    raise BusinessError(ERROR_CODE_AI, f"AI-Extraktion nach {MAX_VERSUCHE} Versuchen fehlgeschlagen: {meldung}")
 
 
 def registriere_ai_extraction_handler(worker) -> None:

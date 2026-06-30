@@ -5,8 +5,8 @@ Zwei getrennte Verträge werden hier überbrückt:
 1. EINGABE — Prozessvariablen, die Camunda an den Worker liefert
    (Scope-Doc Abschnitt 14.1 + Pflichtdaten-Regel 11.1):
      Pflicht:  invoiceId, invoiceNumber, supplierName, invoiceDate,
-               amountGross, currency, channel
-     Optional: fileName, dueDate, iban, amountNet
+               amountGross, currency, billingAddress
+     Optional: fileName, dueDate, iban, amountNet, channel
 
 2. AUSGABE — das Dict, das an grpc_client.speichere_rechnung() geht.
    speichere_rechnung() ruft invoice_pb2.Rechnungsmetadaten(**rechnung) auf,
@@ -28,7 +28,6 @@ EINGABE_PFLICHT = [
     "supplierName",
     "invoiceDate",
     "currency",
-    "channel",
     "billingAddress",
 ]
 

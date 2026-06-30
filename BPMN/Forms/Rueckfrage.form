@@ -229,6 +229,17 @@
       "path": "invoiceItems"
     },
     {
+      "text": "ℹ️ **Keine Rechnungspositionen vorhanden.**",
+      "type": "text",
+      "id": "Field_ItemsEmptyHint",
+      "layout": {
+        "row": "Row_ItemsEmpty"
+      },
+      "conditional": {
+        "hide": "=invoiceItems != null and count(invoiceItems) > 0"
+      }
+    },
+    {
       "label": "Kommentar des Prüfers",
       "type": "textarea",
       "layout": {

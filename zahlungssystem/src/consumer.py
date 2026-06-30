@@ -36,7 +36,7 @@ def protokolliere_status(auftrag: dict, status: str):
     LOG_DATEI.write_text(json.dumps(protokoll, indent=2), encoding="utf-8")
 
 
-PFLICHTFELDER = ["invoiceId", "supplierName", "iban", "amount", "currency", "dueDate"]
+PFLICHTFELDER = ["invoiceId", "supplierName", "iban", "amount", "currency"]
 
 
 def validiere_auftrag(auftrag: dict) -> str | None:

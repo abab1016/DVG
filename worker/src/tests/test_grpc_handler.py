@@ -88,25 +88,31 @@ async def test_grpc_already_exists_wird_zu_business_error():
 @pytest.mark.asyncio
 async def test_grpc_unavailable_wird_re_raised_fuer_zeebe_retry():
     fehler = FakeRpcError(grpc.StatusCode.UNAVAILABLE, "Server weg")
-    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler):
+    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler) as mock_grpc, \
+         patch("asyncio.sleep"):
         with pytest.raises(grpc.RpcError):
             await handle_grpc_speichern(**vollstaendige_variablen())
+    assert mock_grpc.call_count == 3
 
 
 @pytest.mark.asyncio
 async def test_grpc_deadline_exceeded_wird_re_raised():
     fehler = FakeRpcError(grpc.StatusCode.DEADLINE_EXCEEDED, "Timeout")
-    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler):
+    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler) as mock_grpc, \
+         patch("asyncio.sleep"):
         with pytest.raises(grpc.RpcError):
             await handle_grpc_speichern(**vollstaendige_variablen())
+    assert mock_grpc.call_count == 3
 
 
 @pytest.mark.asyncio
 async def test_grpc_internal_wird_re_raised():
     fehler = FakeRpcError(grpc.StatusCode.INTERNAL, "Server-Bug")
-    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler):
+    with patch("handlers.grpc_handler.speichere_rechnung", side_effect=fehler) as mock_grpc, \
+         patch("asyncio.sleep"):
         with pytest.raises(grpc.RpcError):
             await handle_grpc_speichern(**vollstaendige_variablen())
+    assert mock_grpc.call_count == 3
 
 
 @pytest.mark.asyncio

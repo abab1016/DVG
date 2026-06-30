@@ -145,6 +145,16 @@
       "description": "Zahlungsempfänger-IBAN"
     },
     {
+      "label": "Rechnungs-PDF hochladen (optional)",
+      "type": "filepicker",
+      "layout": {
+        "row": "Row_PdfUpload"
+      },
+      "id": "Field_pdfUpload",
+      "key": "pdfUpload",
+      "description": "PDF der Eingangsrechnung hochladen – wird automatisch im System gespeichert"
+    },
+    {
       "label": "Dateiname",
       "type": "textfield",
       "layout": {
@@ -152,7 +162,8 @@
         "columns": 6
       },
       "id": "Field_fileName",
-      "key": "fileName"
+      "key": "fileName",
+      "description": "Wird automatisch aus dem Upload befüllt, oder manuell eintragen"
     },
     {
       "label": "Eingangskanal *",
@@ -244,6 +255,17 @@
       "allowAdd": true,
       "allowRemove": true,
       "path": "invoiceItems"
+    },
+    {
+      "text": "⚠️ **Keine Rechnungspositionen vorhanden. Bitte mindestens eine Position erfassen.**",
+      "type": "text",
+      "id": "Field_ItemsEmptyHint",
+      "layout": {
+        "row": "Row_ItemsEmpty"
+      },
+      "conditional": {
+        "hide": "=invoiceItems != null and count(invoiceItems) > 0"
+      }
     }
   ],
   "executionPlatform": "Camunda Cloud",

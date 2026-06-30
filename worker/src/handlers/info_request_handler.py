@@ -63,7 +63,7 @@ async def handle_rueckfrage_senden(**variablen: Any) -> Dict[str, Any]:
     except Exception as fehler:
         logger.error("[%s] Unerwarteter Fehler fuer %s: %s",
                      JOB_TYPE_RUECKFRAGE, invoice_id, fehler)
-        return {"infoRequestSent": False, "infoRequestError": str(fehler)}
+        raise
 
     logger.info("[%s] Rueckfrage protokolliert: %s", JOB_TYPE_RUECKFRAGE, datei_pfad)
     return {"infoRequestSent": True}

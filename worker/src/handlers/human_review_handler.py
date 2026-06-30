@@ -13,11 +13,6 @@ save-invoice-metadata / send-payment-order. Aufgaben:
 Die bestehenden gRPC- und RabbitMQ-Handler bleiben unveraendert und lesen
 anschliessend die korrigierten Prozessvariablen.
 
-HINWEIS FUER NICK (KAN-418):
-  Der Job-Type "apply-human-review" muss im BPMN als Service-Task auf dem Rueckweg
-  des Human-Review-User-Tasks (Task_RechnungPruefen) vor save-invoice-metadata
-  eingetragen werden. Sobald der Name feststeht, diesen Hinweis entfernen und
-  JOB_TYPE_HUMAN_REVIEW anpassen.
 """
 import json
 import logging

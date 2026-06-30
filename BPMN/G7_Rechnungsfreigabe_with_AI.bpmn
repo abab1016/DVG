@@ -14,6 +14,14 @@
     <bpmn:association id="Association_RabbitMQ" sourceRef="Task_ZahlungVeranlassen" targetRef="TextAnnotation_RabbitMQ" />
     <bpmn:association id="Association_0l6c72m" associationDirection="None" sourceRef="TextAnnotation_1nvcn8o" targetRef="Task_Archivieren" />
     <bpmn:association id="Association_gRPC" sourceRef="Task_MetadatenSpeichern" targetRef="TextAnnotation_gRPC" />
+    <bpmn:textAnnotation id="TextAnnotation_AI">
+      <bpmn:text>Retries: 3</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="TextAnnotation_UiPath">
+      <bpmn:text>Retries: 3</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_AI" sourceRef="Task_AiExtraction" targetRef="TextAnnotation_AI" />
+    <bpmn:association id="Association_UiPath" sourceRef="Task_UiPathERPErfassung" targetRef="TextAnnotation_UiPath" />
   </bpmn:collaboration>
   <bpmn:process id="Process_Rechnungsfreigabe_AI" name="Rechnungsfreigabeprozess mit AI &#38; UiPath-Bot" isExecutable="true">
     <bpmn:laneSet id="LaneSet_Rechnungsfreigabe">
@@ -81,7 +89,7 @@
     </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Task_UiPathERPErfassung" name="Rechnung im ERP per Bot erfassen">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="uipath-erp-erfassung" retries="1" />
+        <zeebe:taskDefinition type="uipath-erp-erfassung" retries="3" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_ERPStart</bpmn:incoming>
       <bpmn:outgoing>Flow_BotSuccessToMerge</bpmn:outgoing>
@@ -229,7 +237,7 @@
     </bpmn:startEvent>
     <bpmn:serviceTask id="Task_AiExtraction" name="AI-Extraktion durchführen">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="run-ai-extraction" retries="1" />
+        <zeebe:taskDefinition type="run-ai-extraction" retries="3" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_EmailToAi</bpmn:incoming>
       <bpmn:outgoing>Flow_AiToGateway</bpmn:outgoing>
@@ -831,6 +839,20 @@
       <bpmndi:BPMNEdge id="Association_gRPC_di" bpmnElement="Association_gRPC">
         <di:waypoint x="1549" y="200" />
         <di:waypoint x="1544" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_AI_di" bpmnElement="TextAnnotation_AI">
+        <dc:Bounds x="360" y="250" width="80" height="18" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_UiPath_di" bpmnElement="TextAnnotation_UiPath">
+        <dc:Bounds x="2670" y="280" width="80" height="18" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_AI_di" bpmnElement="Association_AI">
+        <di:waypoint x="400" y="290" />
+        <di:waypoint x="400" y="268" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_UiPath_di" bpmnElement="Association_UiPath">
+        <di:waypoint x="2710" y="320" />
+        <di:waypoint x="2710" y="298" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

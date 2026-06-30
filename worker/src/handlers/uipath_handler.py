@@ -33,6 +33,33 @@ JOB_TIMEOUT_MS = 300_000  # Erhöhtes Timeout für echten Bot-Lauf (5 Min)
 ERROR_CODE_UIPATH = "ERR_UIPATH_FAILED"
 
 
+def _zu_float(wert: Any, standard: float) -> float:
+    """Wandelt einen evtl. als String vorliegenden Betrag robust in float um.
+
+    Akzeptiert deutsches (1.234,56) und englisches (1,234.56) Format.
+    Fällt bei None oder unparsbaren Werten auf `standard` zurück.
+    """
+    if isinstance(wert, (int, float)):
+        return float(wert)
+    if wert is None:
+        return standard
+    text = str(wert).strip()
+    if not text:
+        return standard
+    if "," in text and "." in text:
+        if text.rfind(",") > text.rfind("."):
+            text = text.replace(".", "").replace(",", ".")
+        else:
+            text = text.replace(",", "")
+    elif "," in text:
+        text = text.replace(",", ".")
+    try:
+        return float(text)
+    except ValueError:
+        logger.warning("[%s] Betrag '%s' nicht parsebar, nutze Standardwert %.2f.", JOB_TYPE_UIPATH_ERP, wert, standard)
+        return standard
+
+
 async def handle_uipath_erp_erfassung(**variablen: Any) -> Dict[str, Any]:
     """Service-Task-Handler `uipath-erp-erfassung`."""
     # Dynamisch zur Laufzeit auslesen, da .env erst nach Import geladen wird
@@ -46,11 +73,17 @@ async def handle_uipath_erp_erfassung(**variablen: Any) -> Dict[str, Any]:
     invoice_id = variablen.get("invoiceId", "<ohne ID>")
     invoice_number = variablen.get("invoiceNumber", "RE-Unbekannt")
     supplier_name = variablen.get("supplierName", "Unbekannter Lieferant")
-    amount_gross = variablen.get("amountGross", 0.0)
-    amount_net = variablen.get("amountNet", amount_gross / 1.19)
+    # Beträge können als String aus der AI-Extraktion/Formular kommen -> defensiv zu float casten.
+    amount_gross = _zu_float(variablen.get("amountGross"), 0.0)
+    amount_net = _zu_float(variablen.get("amountNet"), round(amount_gross / 1.19, 2))
 
     raise_if_failure_enabled("erp")
-    
+
+    supplier_comment = (variablen.get("supplierComment") or "").strip()
+    erp_comment = "Automatisch erfasst durch UiPath Bot via Camunda 8."
+    if supplier_comment:
+        erp_comment = f"{erp_comment} Lieferantenkommentar: {supplier_comment}"
+
     # Payload für den Bot (Header + Positionen)
     payload = {
         "invoiceNumber": invoice_number,
@@ -58,7 +91,7 @@ async def handle_uipath_erp_erfassung(**variablen: Any) -> Dict[str, Any]:
         "supplierName": supplier_name,
         "customerNumber": variablen.get("customerNumber", "K-001"),
         "paymentTerms": variablen.get("dueDate", "14 Tage netto"),
-        "comment": "Automatisch erfasst durch UiPath Bot via Camunda 8.",
+        "comment": erp_comment,
         "positionDescription": f"Dienstleistungen laut Rechnung {invoice_number}",
         "quantity": "1",
         "unit": "Stk.",
@@ -80,23 +113,38 @@ async def handle_uipath_erp_erfassung(**variablen: Any) -> Dict[str, Any]:
     if ist_echte_integration:
         logger.info("[%s] Echte UiPath Orchestrator-Integration aktiviert.", JOB_TYPE_UIPATH_ERP)
         try:
-            # 1. OAuth-Token holen
-            logger.info("[%s] [Real UiPath] Hole OAuth-Access-Token von cloud.uipath.com...", JOB_TYPE_UIPATH_ERP)
-            token = await asyncio.to_thread(_get_uipath_token, uipath_client_id, uipath_client_secret)
-            
-            # 2. Queue Item hinzufügen (Aufgabe 5.4)
+            # 1. OAuth-Token holen (mit Retries)
+            MAX_API_VERSUCHE = 3
+            token = None
+            for versuch in range(1, MAX_API_VERSUCHE + 1):
+                try:
+                    logger.info("[%s] [Real UiPath] Hole OAuth-Token (Versuch %d/%d)...", JOB_TYPE_UIPATH_ERP, versuch, MAX_API_VERSUCHE)
+                    token = await asyncio.to_thread(_get_uipath_token, uipath_client_id, uipath_client_secret)
+                    break
+                except Exception as e:
+                    logger.warning("[%s] [Real UiPath] Token-Abruf fehlgeschlagen (Versuch %d/%d): %s", JOB_TYPE_UIPATH_ERP, versuch, MAX_API_VERSUCHE, e)
+                    if versuch < MAX_API_VERSUCHE:
+                        await asyncio.sleep(3)
+                    else:
+                        raise BusinessError(ERROR_CODE_UIPATH, f"OAuth-Token nach {MAX_API_VERSUCHE} Versuchen nicht erhalten: {e}")
+
+            # 2. Queue Item hinzufügen (mit Retries, Aufgabe 5.4)
             logger.info("[%s] [Real UiPath] Erzeuge Queue Item in Warteschlange '%s'...", JOB_TYPE_UIPATH_ERP, uipath_queue_name)
             reference = f"Camunda-{invoice_id}"
-            item_id = await asyncio.to_thread(
-                _add_queue_item,
-                token,
-                uipath_org,
-                uipath_tenant,
-                uipath_folder_id,
-                uipath_queue_name,
-                payload,
-                reference
-            )
+            item_id = None
+            for versuch in range(1, MAX_API_VERSUCHE + 1):
+                try:
+                    item_id = await asyncio.to_thread(
+                        _add_queue_item, token, uipath_org, uipath_tenant,
+                        uipath_folder_id, uipath_queue_name, payload, reference
+                    )
+                    break
+                except Exception as e:
+                    logger.warning("[%s] [Real UiPath] Queue-Item-Erstellung fehlgeschlagen (Versuch %d/%d): %s", JOB_TYPE_UIPATH_ERP, versuch, MAX_API_VERSUCHE, e)
+                    if versuch < MAX_API_VERSUCHE:
+                        await asyncio.sleep(3)
+                    else:
+                        raise BusinessError(ERROR_CODE_UIPATH, f"Queue Item nach {MAX_API_VERSUCHE} Versuchen nicht erstellt: {e}")
             logger.info("[%s] [Real UiPath] Queue Item erfolgreich erzeugt. ID: %s", JOB_TYPE_UIPATH_ERP, item_id)
             
             # 3. Ergebnis abfragen im Polling-Verfahren (Aufgabe 5.5)

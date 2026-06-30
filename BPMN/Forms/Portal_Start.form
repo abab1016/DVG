@@ -138,7 +138,17 @@
       "description": " z.B. DE89 3704 0044 0532 0130 00"
     },
     {
-      "label": "Dateiname der PDF *",
+      "label": "Rechnungs-PDF hochladen",
+      "type": "filepicker",
+      "layout": {
+        "row": "Row_PdfUpload"
+      },
+      "id": "Field_pdfUpload",
+      "key": "pdfUpload",
+      "description": "PDF der Eingangsrechnung hochladen"
+    },
+    {
+      "label": "Dateiname der Rechnung (PDF)",
       "type": "textfield",
       "layout": {
         "row": "Row_6",
@@ -146,10 +156,7 @@
       },
       "id": "Field_fileName",
       "key": "fileName",
-      "defaultValue": "rechnung.pdf",
-      "validate": {
-        "required": true
-      }
+      "description": "z.B. INV-2026-001.pdf — nur nötig wenn kein PDF hochgeladen wurde"
     },
     {
       "label": "Eingangskanal",
@@ -174,6 +181,16 @@
       "validate": {
         "required": true
       }
+    },
+    {
+      "label": "Kommentar zur Rechnung (optional)",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_SupplierComment"
+      },
+      "id": "Field_supplierComment",
+      "key": "supplierComment",
+      "description": "Optionale Anmerkungen des Lieferanten zur Rechnung"
     },
     {
       "label": "Rechnungspositionen",
@@ -238,6 +255,17 @@
       "allowAdd": true,
       "allowRemove": true,
       "path": "invoiceItems"
+    },
+    {
+      "text": "**Mindestens eine Rechnungsposition ist erforderlich.**",
+      "type": "text",
+      "id": "Field_ItemsEmptyError",
+      "layout": {
+        "row": "Row_9"
+      },
+      "conditional": {
+        "hide": "=invoiceItems != null and count(invoiceItems) > 0"
+      }
     }
   ],
   "executionPlatform": "Camunda Cloud",
@@ -246,7 +274,7 @@
     "name": "Camunda Modeler",
     "version": "5.48.0"
   },
-  "schemaVersion": 19,
+  "schemaVersion": 16,
   "id": "Form_PortalStart",
   "type": "default"
 }

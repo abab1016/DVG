@@ -19,30 +19,30 @@ ZEEBE_ADRESSE = os.getenv("ZEEBE_ADRESSE", "localhost:26500")
 
 async def main():
     print("=== Automatischer E-Mail-Prozessstart ===")
-    
+
     # Schritt 1: PDF erstellen
     print("\n[Schritt 1] Generiere neue PDF-Rechnung...")
     cnt = hole_naechsten_zaehler()
     datei_name = erstelle_pdf(cnt)
-    
+
     # Schritt 2: Zeebe Trigger
     print("\n[Schritt 2] Sende Startnachricht an Zeebe...")
     try:
         kanal = create_insecure_channel(grpc_address=ZEEBE_ADRESSE)
         client = ZeebeClient(kanal)
-        
+
         await client.publish_message(
             name="Message_InvoiceReceived",
-            correlation_key="",  # Leer für Start-Events
+            correlation_key="",  # Leer fuer Start-Events
             variables={
                 "fileName": datei_name
             }
         )
-        print(f"\n\u2713 ERFOLG: Prozess gestartet für Rechnung INV-2026-{cnt}!")
-        print("Die Aufgabe 'Rechnungsmetadaten erfassen' ist nun in der Camunda Tasklist sichtbar.")
-        
+        print(f"\n[OK] ERFOLG: Prozess gestartet fuer Rechnung INV-2026-{cnt}!")
+        print("Die Aufgabe ist nun in der Camunda Tasklist sichtbar.")
+
     except Exception as e:
-        print(f"\n\u2717 FEHLER: Prozess konnte nicht gestartet werden: {e}")
+        print(f"\n[FEHLER] Prozess konnte nicht gestartet werden: {e}")
         sys.exit(1)
 
 

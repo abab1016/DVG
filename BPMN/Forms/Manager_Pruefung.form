@@ -229,6 +229,28 @@
       ]
     },
     {
+      "text": "ℹ️ **Keine Rechnungspositionen vorhanden.**",
+      "type": "text",
+      "id": "Field_ItemsEmptyHint",
+      "layout": {
+        "row": "Row_ItemsEmpty"
+      },
+      "conditional": {
+        "hide": "=invoiceItems != null and count(invoiceItems) > 0"
+      }
+    },
+    {
+      "text": "### 💬 Antwort des Lieferanten\n{{infoResponseComment}}",
+      "type": "text",
+      "id": "Field_lieferantenKommentar",
+      "layout": {
+        "row": "Row_SupplierComment"
+      },
+      "conditional": {
+        "hide": "=infoResponseComment = null or infoResponseComment = \"\""
+      }
+    },
+    {
       "text": "---\n**Bestätigung:**",
       "type": "text",
       "id": "Field_ConfirmHeader"

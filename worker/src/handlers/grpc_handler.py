@@ -62,23 +62,35 @@ async def handle_grpc_speichern(**variablen: Any) -> Dict[str, Any]:
                      JOB_TYPE_GRPC_SPEICHERN, invoice_id, fehler)
         raise BusinessError(ERROR_CODE_GRPC, str(fehler))
 
-    try:
-        bestaetigte_id = await asyncio.to_thread(speichere_rechnung, rechnung)
-    except grpc.RpcError as fehler:
-        code = fehler.code()
-        details = fehler.details() or ""
-        business_code = GRPC_BUSINESS_FEHLER.get(code)
-        if business_code is not None:
-            logger.error("[%s] Business-Fehler für %s [%s]: %s",
-                         JOB_TYPE_GRPC_SPEICHERN, invoice_id, code.name, details)
-            raise BusinessError(business_code, f"{code.name}: {details}")
-        logger.error("[%s] Transienter gRPC-Fehler für %s [%s]: %s",
-                     JOB_TYPE_GRPC_SPEICHERN, invoice_id, code.name, details)
-        raise
-    except RuntimeError as fehler:
-        logger.error("[%s] Service hat success=False geliefert für %s: %s",
-                     JOB_TYPE_GRPC_SPEICHERN, invoice_id, fehler)
-        raise BusinessError(ERROR_CODE_GRPC, str(fehler))
+    MAX_VERSUCHE = 3
+    letzter_fehler: grpc.RpcError | None = None
+    bestaetigte_id: str = ""
+
+    for versuch in range(1, MAX_VERSUCHE + 1):
+        try:
+            bestaetigte_id = await asyncio.to_thread(speichere_rechnung, rechnung)
+            break
+        except grpc.RpcError as fehler:
+            code = fehler.code()
+            details = fehler.details() or ""
+            business_code = GRPC_BUSINESS_FEHLER.get(code)
+            if business_code is not None:
+                logger.error("[%s] Business-Fehler für %s [%s]: %s",
+                             JOB_TYPE_GRPC_SPEICHERN, invoice_id, code.name, details)
+                raise BusinessError(business_code, f"{code.name}: {details}")
+            letzter_fehler = fehler
+            logger.warning("[%s] Transienter gRPC-Fehler (Versuch %d/%d) für %s [%s]: %s",
+                           JOB_TYPE_GRPC_SPEICHERN, versuch, MAX_VERSUCHE, invoice_id, code.name, details)
+            if versuch < MAX_VERSUCHE:
+                await asyncio.sleep(3)
+        except RuntimeError as fehler:
+            logger.error("[%s] Service hat success=False geliefert für %s: %s",
+                         JOB_TYPE_GRPC_SPEICHERN, invoice_id, fehler)
+            raise BusinessError(ERROR_CODE_GRPC, str(fehler))
+    else:
+        logger.error("[%s] gRPC nach %d Versuchen fehlgeschlagen für %s: %s",
+                     JOB_TYPE_GRPC_SPEICHERN, MAX_VERSUCHE, invoice_id, letzter_fehler)
+        raise letzter_fehler
 
     if not bestaetigte_id:
         raise BusinessError(ERROR_CODE_GRPC, "gRPC-Service hat keine gueltige invoiceId zurueckgegeben")

@@ -17,8 +17,9 @@ def speichere_rechnung(rechnung: dict) -> str:
 
     kanal = grpc.insecure_channel(GRPC_ADRESSE)
     stub = invoice_pb2_grpc.RechnungsServiceStub(kanal)
-    items = rechnung.pop("items", [])
-    anfrage = invoice_pb2.Rechnungsmetadaten(**rechnung)
+    items = rechnung.get("items", [])
+    rechnung_ohne_items = {k: v for k, v in rechnung.items() if k != "items"}
+    anfrage = invoice_pb2.Rechnungsmetadaten(**rechnung_ohne_items)
     for item in items:
         anfrage.items.add(
             description=item.get("description", ""),
@@ -30,11 +31,10 @@ def speichere_rechnung(rechnung: dict) -> str:
     try:
         antwort = stub.SpeichereRechnungsmetadaten(anfrage, timeout=ZEITLIMIT_SEK)
     except grpc.RpcError as fehler:
-        kanal.close()
         _fehler_ausgeben(fehler)
         raise
-
-    kanal.close()
+    finally:
+        kanal.close()
 
     if not antwort.success:
         raise RuntimeError(f"Service-Fehler: {antwort.message}")

@@ -42,13 +42,23 @@ services:
     ports:
       - "26500:26500"  # gRPC-Gateway für pyzeebe-Worker
       - "9600:9600"    # Health/Monitoring
+      - "8088:8080"    # Camunda 8 REST-API (v2) – Document Handling für PDF-Upload (Worker lädt Dokument-Bytes hier herunter)
     environment:
       - ZEEBE_BROKER_GATEWAY_NETWORK_HOST=0.0.0.0
       - ZEEBE_BROKER_NETWORK_HOST=0.0.0.0
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      # Document Handling (Camunda 8.6): Der Default-Store "in-memory" ist NICHT
+      # container-uebergreifend – ein per Tasklist-Filepicker hochgeladenes PDF waere
+      # fuer den Worker (Download via Zeebe-REST :8088) unsichtbar. Daher ein geteilter
+      # "local"-Store auf einem gemeinsamen Volume (camunda-documents). Dieselbe
+      # Konfiguration MUSS auf Zeebe UND Tasklist identisch gesetzt sein.
+      - DOCUMENT_DEFAULT_STORE_ID=local
+      - DOCUMENT_STORE_LOCAL_CLASS=io.camunda.document.store.localstorage.LocalStorageDocumentStoreProvider
+      - DOCUMENT_STORE_LOCAL_PATH=/usr/local/camunda/documents
     volumes:
       - zeebe-data:/usr/local/zeebe/data
+      - camunda-documents:/usr/local/camunda/documents
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -66,7 +76,7 @@ services:
       - elasticsearch
 
   tasklist:
-    image: camunda/tasklist:8.6.0
+    image: camunda/tasklist:8.7.0
     ports:
       - "8082:8080"   # http://localhost:8082 (demo/demo)
     environment:
@@ -76,6 +86,13 @@ services:
       - CAMUNDA_TASKLIST_ZEEBE_RESTADDRESS=http://zeebe:8080
       - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
       - CAMUNDA_TASKLIST_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+      # Document Handling: identisch zu Zeebe, damit der Filepicker-Upload im
+      # selben geteilten "local"-Store landet, den der Worker spaeter ausliest.
+      - DOCUMENT_DEFAULT_STORE_ID=local
+      - DOCUMENT_STORE_LOCAL_CLASS=io.camunda.document.store.localstorage.LocalStorageDocumentStoreProvider
+      - DOCUMENT_STORE_LOCAL_PATH=/usr/local/camunda/documents
+    volumes:
+      - camunda-documents:/usr/local/camunda/documents
     depends_on:
       - zeebe
       - elasticsearch
@@ -104,3 +121,4 @@ volumes:
   es-data:
   zeebe-data:
   n8n-data:
+  camunda-documents:   # geteilter Document-Store (Zeebe + Tasklist) fuer Filepicker-Uploads

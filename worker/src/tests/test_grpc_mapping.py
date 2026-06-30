@@ -58,8 +58,8 @@ def test_kann_echtes_proto_konstruieren():
     """
     pb2 = pytest.importorskip("invoice_pb2")
     rechnung = variablen_zu_rechnung(vollstaendige_variablen())
-    items = rechnung.pop("items", [])
-    nachricht = pb2.Rechnungsmetadaten(**rechnung)
+    items = rechnung.get("items", [])
+    nachricht = pb2.Rechnungsmetadaten(**{k: v for k, v in rechnung.items() if k != "items"})
     for item in items:
         nachricht.items.add(
             description=item.get("description", ""),
@@ -87,12 +87,12 @@ def test_amount_net_abgeleitet_wenn_fehlt():
 def test_fehlende_scope_pflichtfelder_werden_aufgelistet():
     variablen = vollstaendige_variablen()
     del variablen["invoiceNumber"]
-    del variablen["channel"]
+    del variablen["billingAddress"]
     with pytest.raises(MappingFehler) as info:
         variablen_zu_rechnung(variablen)
     nachricht = str(info.value)
     assert "invoiceNumber" in nachricht
-    assert "channel" in nachricht
+    assert "billingAddress" in nachricht
 
 
 def test_leerer_string_zaehlt_als_fehlendes_feld():

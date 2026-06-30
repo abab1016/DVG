@@ -1,6 +1,23 @@
 """Tests für pdf_handler."""
+import base64
+import contextlib
+
 import pytest
-from handlers.pdf_handler import _extrahiere_daten_aus_text, handle_pdf_auslesen
+from handlers import pdf_handler
+from handlers.pdf_handler import (
+    _extrahiere_daten_aus_text,
+    _sicherer_dateiname,
+    handle_pdf_auslesen,
+    speichere_upload,
+)
+
+
+class _FakeAntwort:
+    def __init__(self, daten: bytes):
+        self._daten = daten
+
+    def read(self) -> bytes:
+        return self._daten
 
 
 def test_extrahiere_daten_aus_text():
@@ -70,3 +87,65 @@ async def test_handle_pdf_auslesen_fehlende_datei():
     assert ergebnis["pdfSuccess"] is False
     assert ergebnis["channel"] == "EMAIL"
     assert "nicht gefunden" in ergebnis["errorMessage"]
+
+
+def test_sicherer_dateiname_entfernt_pfadanteile():
+    assert _sicherer_dateiname("../../etc/passwd") == "passwd"
+    assert _sicherer_dateiname("C:\\temp\\rechnung.pdf") == "rechnung.pdf"
+    assert _sicherer_dateiname("") == "portal_rechnung.pdf"
+    assert _sicherer_dateiname("..") == "portal_rechnung.pdf"
+
+
+def test_speichere_upload_camunda_dokument(tmp_path, monkeypatch):
+    """Camunda-Dokument-Referenz wird per REST-API geladen und gespeichert."""
+    monkeypatch.setattr(pdf_handler, "_ARCHIV_ORDNER", tmp_path)
+    aufgerufene_urls = []
+
+    @contextlib.contextmanager
+    def fake_urlopen(anfrage, timeout=None):
+        aufgerufene_urls.append(anfrage.full_url)
+        yield _FakeAntwort(b"%PDF-1.7 fake")
+
+    monkeypatch.setattr(pdf_handler.urllib.request, "urlopen", fake_urlopen)
+
+    referenz = [{
+        "camunda.document.type": "camunda",
+        "documentId": "doc-123",
+        "storeId": "in-memory",
+        "metadata": {"fileName": "rechnung_portal.pdf"},
+    }]
+    name = speichere_upload(referenz)
+
+    assert name == "rechnung_portal.pdf"
+    assert (tmp_path / "rechnung_portal.pdf").read_bytes() == b"%PDF-1.7 fake"
+    assert "/v2/documents/doc-123" in aufgerufene_urls[0]
+    assert "storeId=in-memory" in aufgerufene_urls[0]
+
+
+def test_speichere_upload_dokument_download_fehler_gibt_none(tmp_path, monkeypatch):
+    monkeypatch.setattr(pdf_handler, "_ARCHIV_ORDNER", tmp_path)
+
+    def fake_urlopen(anfrage, timeout=None):
+        raise OSError("Verbindung verweigert")
+
+    monkeypatch.setattr(pdf_handler.urllib.request, "urlopen", fake_urlopen)
+
+    name = speichere_upload([{"documentId": "doc-999", "storeId": "in-memory"}])
+    assert name is None
+
+
+def test_speichere_upload_base64_fallback(tmp_path, monkeypatch):
+    monkeypatch.setattr(pdf_handler, "_ARCHIV_ORDNER", tmp_path)
+    inhalt = b"%PDF-1.4 base64 content"
+    referenz = {"name": "inline.pdf", "content": base64.b64encode(inhalt).decode()}
+
+    name = speichere_upload(referenz)
+
+    assert name == "inline.pdf"
+    assert (tmp_path / "inline.pdf").read_bytes() == inhalt
+
+
+def test_speichere_upload_leer_gibt_none():
+    assert speichere_upload(None) is None
+    assert speichere_upload([]) is None
+    assert speichere_upload([{"foo": "bar"}]) is None
